@@ -39,6 +39,7 @@ void DISP_DrawDebug(void);
 void DISP_DrawInfo(void);
 void DISP_DrawError(void);
 void DISP_DrawBoot(void);
+void DISP_DrawBootloader(void);
 void DISP_DrawMenu(uint8_t entry);
 void DISP_SetBrightness(uint8_t bright);
 

@@ -57,6 +57,7 @@ void DMA1_Channel2_3_IRQHandler(void);
 void ADC1_IRQHandler(void);
 void TIM16_IRQHandler(void);
 void I2C1_IRQHandler(void);
+void I2C2_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

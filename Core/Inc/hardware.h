@@ -10,6 +10,7 @@
 
 #include "main.h"
 #include "conversion.h"
+#include "display.h"
 
 uint8_t HW_version;
 uint8_t HW_beta;

@@ -17,6 +17,8 @@ extern "C" {
 #define CONFIG_DEFAULT_LOW_PARTS_WARN 0
 #define CONFIG_DEFAULT_LONG_PARTS_ID "Not set"
 
+#define CONFIG_ENABLE_WDT
+
 #ifdef __cplusplus
 }
 #endif

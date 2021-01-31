@@ -13,6 +13,15 @@ extern "C" {
 #endif
 
 #define __STRG_DEBUG "DEBUG"
+#define __STRG_MENU "Menü"
+#define __STRG_BRIGHTNESS "Helligkeit"
+#define __STRG_PART_PITCH "Teilung"
+#define __STRG_I2C_ADDRESS "Slot"
+#define __STRG_RESET "Reset"
+#define __STRG_EXIT "Zurück"
+#define __STRG_ERROR "Fehler"
+#define __STRG_BOOTLOADER_L0 "Boot-"
+#define __STRG_BOOTLOADER_L1 "loader"
 #define __STRG_SHORT_ID "ID"
 
 #ifdef __cplusplus

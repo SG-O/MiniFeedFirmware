@@ -51,13 +51,17 @@ CRC_HandleTypeDef hcrc;
 
 I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
+DMA_HandleTypeDef hdma_i2c2_tx;
 
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim16;
 
 UART_HandleTypeDef huart1;
 
+WWDG_HandleTypeDef hwwdg;
+
 /* USER CODE BEGIN PV */
+uint8_t startupDone = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -71,6 +75,7 @@ static void MX_I2C2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM16_Init(void);
+static void MX_WWDG_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -105,7 +110,8 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  uint8_t wdReset = __HAL_RCC_GET_FLAG(RCC_FLAG_WWDGRST);
+  __HAL_RCC_CLEAR_RESET_FLAGS();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -125,27 +131,36 @@ int main(void)
   MX_USART1_UART_Init();
   MX_TIM2_Init();
   MX_TIM16_Init();
+  MX_WWDG_Init();
   /* USER CODE BEGIN 2 */
   HW_Setup();
   PERSIST_Setup(&hi2c2);
   DISP_Setup(&hi2c2);
   UI_ShowBoot();
   DISP_SetBrightness(PERSIST_GetDisplayBrightness());
+  if (wdReset) ERROR_SetError(ERROR_WDT);
   ANALOG_Setup(&hadc1);
   DRV_Start(&htim2, &htim16);
   CRC_Start(&hcrc);
   HAL_Delay(1000);
+  startupDone = 1;
+  MX_WWDG_Init();
   ANALOG_ForceMultiSample(ANALOG_OVERSAMPLE);
   COM_Setup(&hi2c1);
   STATUS_SetReady();
+  uint32_t oldTime;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	 oldTime = HAL_GetTick();
+	 HAL_WWDG_Refresh(&hwwdg);
 	 UI_Process();
-	 HAL_Delay(50);
+	 while (HAL_GetTick() - oldTime < 50) {
+		 asm("NOP");
+	 }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -551,6 +566,37 @@ static void MX_USART1_UART_Init(void)
   /* USER CODE BEGIN USART1_Init 2 */
 
   /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
+  * @brief WWDG Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_WWDG_Init(void)
+{
+
+  /* USER CODE BEGIN WWDG_Init 0 */
+#ifdef CONFIG_ENABLE_WDT
+	if (startupDone == 0) return;
+  /* USER CODE END WWDG_Init 0 */
+
+  /* USER CODE BEGIN WWDG_Init 1 */
+
+  /* USER CODE END WWDG_Init 1 */
+  hwwdg.Instance = WWDG;
+  hwwdg.Init.Prescaler = WWDG_PRESCALER_16;
+  hwwdg.Init.Window = 127;
+  hwwdg.Init.Counter = 127;
+  hwwdg.Init.EWIMode = WWDG_EWI_DISABLE;
+  if (HAL_WWDG_Init(&hwwdg) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN WWDG_Init 2 */
+#endif
+  /* USER CODE END WWDG_Init 2 */
 
 }
 

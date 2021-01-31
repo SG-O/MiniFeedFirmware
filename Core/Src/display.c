@@ -66,15 +66,11 @@ uint8_t u8x8_byte_stm32hal_hw_i2c(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, vo
 		}
 		break;
     case U8X8_MSG_BYTE_END_TRANSFER:
-	{
-		uint8_t iaddress = I2C_ADDRESS;
-		HAL_I2C_Master_Transmit(DISP_hi2c, (uint16_t)iaddress<<1, &buffer[0], buf_idx, 100);
-		//HAL_I2C_Master_Transmit(&hi2c1, (uint16_t)iaddress<<1, &buffer[0], buf_idx, 20u);
-		//TODO Investigate why delay is needed here.
-		//Seems like DMA feeding bytes too fast.
-		volatile uint32_t i;
-		for (i = 1; i <= 500; i++);
-	}
+		while (HAL_I2C_GetState(DISP_hi2c) != HAL_I2C_STATE_READY)
+		{
+			asm("NOP");
+		}
+		HAL_I2C_Master_Transmit(DISP_hi2c, (uint16_t)I2C_ADDRESS<<1, &buffer[0], buf_idx, 10);
     	break;
     default:
       return 0;
@@ -153,20 +149,22 @@ void DISP_DrawInfo(){
 	}
 	offset = calculateStringOffset(snum, 6);
 	u8g2_DrawStr(&u8g2, offset, 68, snum);
-
-	if (feedCount < 1) {
-		HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 1);
-	} else {
-		if (feedCount < PERSIST_GetLowPartWarn()) {
+	if (PERSIST_GetLowPartWarn() > 0) {
+		if (feedCount < 1) {
 			if (HAL_GetTick() > lastBlink + 500) {
 				HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 				lastBlink = HAL_GetTick();
 			}
 		} else {
-			HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 0);
+			if (feedCount < PERSIST_GetLowPartWarn()) {
+				HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 1);
+			} else {
+				HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 0);
+			}
 		}
+	} else {
+		HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, 0);
 	}
-
 	u8g2_SendBuffer(&u8g2);
 }
 
@@ -209,6 +207,23 @@ void DISP_DrawError(){
 	u8g2_SetFont(&u8g2, u8g2_font_inr24_mn);
 	offset = calculateStringOffset(snum, 20);
 	u8g2_DrawStr(&u8g2, offset, 45, snum);
+	if (HAL_GetTick() > lastBlink + 500) {
+		HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+		lastBlink = HAL_GetTick();
+	}
+	u8g2_SendBuffer(&u8g2);
+}
+
+void DISP_DrawBootloader(){
+	u8g2_ClearBuffer(&u8g2);
+	u8g2_SetFontMode(&u8g2, 1);
+	u8g2_SetFontDirection(&u8g2, 0);
+	u8g2_SetFontPosBaseline(&u8g2);
+	u8g2_DrawBox(&u8g2, 0, 0, 40, 72);
+	u8g2_SetFont(&u8g2, u8g2_font_7x14B_mr);
+	u8g2_SetDrawColor(&u8g2, 0);
+	u8g2_DrawStr(&u8g2, 1, 31, __STRG_BOOTLOADER_L0);
+	u8g2_DrawStr(&u8g2, 1, 42, __STRG_BOOTLOADER_L1);
 	u8g2_SendBuffer(&u8g2);
 }
 

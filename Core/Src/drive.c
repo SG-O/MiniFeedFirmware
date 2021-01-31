@@ -74,6 +74,7 @@ void DRV_Feed(uint8_t uiCaused) {
 	}
 	PERSIST_DecRemainingParts();
 	if (speed < 128) return;
+	if (DRV_count > 1) return;
 	HAL_TIM_Base_Stop_IT(DRV_delay);
 	int i = 0;
 	while (HAL_TIM_Base_GetState(DRV_delay) != HAL_TIM_STATE_READY) {
@@ -94,18 +95,35 @@ void DRV_ProcessSensor(){
 		if (STATUS_GetStatus() != STATUS_BUSY) return;
 
 	}
-
+	uint8_t update = 0;
 	if (HAL_GPIO_ReadPin(Sensor_A_GPIO_Port, Sensor_A_Pin) && !HAL_GPIO_ReadPin(Sensor_B_GPIO_Port, Sensor_B_Pin) && !DRV_pol) {
 		if (DRV_count > 0){
 			DRV_count --;
+			update = 1;
 		}
 		DRV_pol = 1;
 	}
 	if (!HAL_GPIO_ReadPin(Sensor_A_GPIO_Port, Sensor_A_Pin) && HAL_GPIO_ReadPin(Sensor_B_GPIO_Port, Sensor_B_Pin) && DRV_pol) {
 		if (DRV_count > 0){
 			DRV_count--;
+			update = 1;
 		}
 		DRV_pol = 0;
+	}
+	if ((DRV_count == 1) && (update == 1)) {
+		HAL_TIM_Base_Stop_IT(DRV_delay);
+		int i = 0;
+		while (HAL_TIM_Base_GetState(DRV_delay) != HAL_TIM_STATE_READY) {
+			HAL_Delay(1);
+			i++;
+			if(i > 20) {
+				DRV_speed = DRV_speed >> 1;
+				DRV_Spin(DRV_speed, 1);
+				return;
+			}
+		}
+		DRV_delay->Instance->ARR = (uint32_t)PERSIST_GetMotorSlowDelay();
+		HAL_TIM_Base_Start_IT(DRV_delay);
 	}
 	if (DRV_count < 1) {
 		DRV_Spin(0, 0);

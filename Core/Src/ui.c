@@ -22,6 +22,14 @@ uint8_t mode = UI_MODE_HOME;
 uint8_t menuEntry = 0;
 
 void UI_ShowBoot() {
+	if ((!HAL_GPIO_ReadPin(Button_A_GPIO_Port, Button_A_Pin)) && (!HAL_GPIO_ReadPin(Button_B_GPIO_Port, Button_B_Pin))) {
+		if (!HAL_GPIO_ReadPin(Button_C_GPIO_Port, Button_C_Pin)) {
+			HW_StartBootloader();
+		} else {
+			mode = UI_MODE_DEBUG;
+		}
+	}
+
 	start = HAL_GetTick();
 	DISP_DrawBoot();
 }
@@ -82,7 +90,7 @@ void UI_Process() {
 		}
 		if (oldButtonB == 1) {
 			oldButtonB = 0;
-			if ((mode == UI_MODE_HOME) || (mode == UI_MODE_HOME)) {
+			if ((mode == UI_MODE_HOME) || (mode == UI_MODE_DEBUG)) {
 				DRV_Feed(1);
 			} else if (mode == UI_MODE_MENU) {
 				menuEntry++;
@@ -116,6 +124,8 @@ void UI_Process() {
 				DRV_Spin(127, 1);
 			} else if (mode == UI_MODE_MENU) {
 				MENU_ChangeEntry(menuEntry, 1);
+			} else if (mode == UI_MODE_DEBUG) {
+				HAL_Delay(200);
 			}
 		}
 	}

@@ -7,6 +7,7 @@
 
 #include "hardware.h"
 
+
 void HW_Setup() {
 	if (HAL_GPIO_ReadPin(HW_MV_GPIO_Port, HW_MV_Pin)){
 		HW_beta = 0;
@@ -42,7 +43,7 @@ void HW_StartBootloader() {
 	void (*SysMemBootJump)(void);
 	volatile uint32_t addr = 0x1FFF0000;
 	SysMemBootJump = (void (*)(void)) (*((uint32_t *)(addr + 4)));
-
+	DISP_DrawBootloader();
 	//Disable all peripheral clocks
 	//Disable used PLL
 	HAL_RCC_DeInit();

@@ -20,6 +20,8 @@ extern "C" {
 #define __STRG_RESET "Reset"
 #define __STRG_EXIT "Exit"
 #define __STRG_ERROR "Error"
+#define __STRG_BOOTLOADER_L0 "Boot-"
+#define __STRG_BOOTLOADER_L1 "loader"
 #define __STRG_SHORT_ID "ID"
 
 #ifdef __cplusplus

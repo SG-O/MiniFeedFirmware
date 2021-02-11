@@ -37,6 +37,7 @@ extern "C" {
 #include "status.h"
 #include "ui.h"
 #include "analog.h"
+#include "backup.h"
 #include <stdio.h>
 #include <string.h>
 /* USER CODE END Includes */

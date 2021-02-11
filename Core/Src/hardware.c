@@ -39,7 +39,19 @@ uint64_t HW_GetHardwareVersion() {
 	return value;
 }
 
+void HW_ProcessBootloaderSchedule() {
+	uint32_t backupData = BACKUP_Read(BACKUP_REG_MESSAGE);
+	if ((backupData && (BACKUP_MESSAGE_BOOTLOADER)) == 0) return;
+	HAL_Delay(1000);
+}
+
 void HW_StartBootloader() {
+	uint32_t backupData = BACKUP_Read(BACKUP_REG_MESSAGE);
+	backupData |= BACKUP_MESSAGE_BOOTLOADER;
+	BACKUP_Write(BACKUP_REG_MESSAGE, backupData);
+}
+
+void HW_InitBootloader() {
 	void (*SysMemBootJump)(void);
 	volatile uint32_t addr = 0x1FFF0000;
 	SysMemBootJump = (void (*)(void)) (*((uint32_t *)(addr + 4)));
@@ -61,4 +73,13 @@ void HW_StartBootloader() {
 	__disable_irq();
 
 	SysMemBootJump();
+}
+
+void HW_CheckForBootloader(uint8_t resetWWDT) {
+	if (!resetWWDT) return;
+	uint32_t backupData = BACKUP_Read(BACKUP_REG_MESSAGE);
+	if ((backupData && (BACKUP_MESSAGE_BOOTLOADER)) == 0) return;
+	backupData &= ~(BACKUP_MESSAGE_BOOTLOADER);
+	BACKUP_Write(BACKUP_REG_MESSAGE, backupData);
+	HW_InitBootloader();
 }

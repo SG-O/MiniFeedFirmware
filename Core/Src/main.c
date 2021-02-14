@@ -584,7 +584,7 @@ static void MX_USART1_UART_Init(void)
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
   huart1.Init.BaudRate = 115200;
-  huart1.Init.WordLength = UART_WORDLENGTH_7B;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
   huart1.Init.Mode = UART_MODE_TX_RX;
@@ -685,9 +685,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : Button_B_Pin ExtDetect_Pin Button_C_Pin Button_A_Pin */
-  GPIO_InitStruct.Pin = Button_B_Pin|ExtDetect_Pin|Button_C_Pin|Button_A_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  /*Configure GPIO pins : Button_B_Pin Button_C_Pin Button_A_Pin */
+  GPIO_InitStruct.Pin = Button_B_Pin|Button_C_Pin|Button_A_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
@@ -710,8 +710,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Sensor_A_Pin Sensor_B_Pin */
-  GPIO_InitStruct.Pin = Sensor_A_Pin|Sensor_B_Pin;
+  /*Configure GPIO pins : Sensor_F_A_Pin Sensor_A_Pin Sensor_B_Pin Sensor_F_B_Pin */
+  GPIO_InitStruct.Pin = Sensor_F_A_Pin|Sensor_A_Pin|Sensor_B_Pin|Sensor_F_B_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -728,6 +728,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(OLED_RESET_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : ExtDetect_Pin */
+  GPIO_InitStruct.Pin = ExtDetect_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(ExtDetect_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LED_Pin */
   GPIO_InitStruct.Pin = LED_Pin;

@@ -80,7 +80,11 @@ uint8_t u8x8_byte_stm32hal_hw_i2c(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, vo
 
 void DISP_Setup(I2C_HandleTypeDef *hi2c){
 	DISP_hi2c = hi2c;
-	u8g2_Setup_ssd1306_i2c_72x40_er_f(&u8g2, U8G2_R1, u8x8_byte_stm32hal_hw_i2c, u8x8_stm32_gpio_and_delay);
+	if (HW_IsV1() == 0) {
+		u8g2_Setup_ssd1306_i2c_72x40_er_f(&u8g2, U8G2_R1, u8x8_byte_stm32hal_hw_i2c, u8x8_stm32_gpio_and_delay);
+	} else {
+		u8g2_Setup_ssd1306_i2c_72x40_er_f(&u8g2, U8G2_R3, u8x8_byte_stm32hal_hw_i2c, u8x8_stm32_gpio_and_delay);
+	}
 	u8g2_SetI2CAddress(&u8g2, I2C_ADDRESS*2);
 	u8g2_InitDisplay(&u8g2);
 	u8g2_SetPowerSave(&u8g2, 0);

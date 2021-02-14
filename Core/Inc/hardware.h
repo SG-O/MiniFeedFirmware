@@ -17,6 +17,7 @@ uint8_t HW_version;
 uint8_t HW_beta;
 
 void HW_Setup(void);
+uint8_t HW_IsV1(void);
 uint64_t HW_GetFirmwareVersion(void);
 uint64_t HW_GetHardwareVersion(void);
 void HW_StartBootloader(void);

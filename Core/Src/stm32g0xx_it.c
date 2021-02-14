@@ -24,6 +24,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "drive.h"
+#include "hardware.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -153,8 +154,14 @@ void SysTick_Handler(void)
 void EXTI4_15_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI4_15_IRQn 0 */
-  if(__HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_6) || __HAL_GPIO_EXTI_GET_FLAG(GPIO_PIN_7)){
-	  DRV_ProcessSensor();
+  if (HW_IsV1() == 0) {
+	  if(__HAL_GPIO_EXTI_GET_FLAG(Sensor_A_Pin) || __HAL_GPIO_EXTI_GET_FLAG(Sensor_B_Pin)){
+	  	  DRV_ProcessSensorV0();
+  	  }
+  } else if (HW_IsV1() == 1) {
+	  if(__HAL_GPIO_EXTI_GET_FLAG(V1_Sensor_A_Pin) || __HAL_GPIO_EXTI_GET_FLAG(V1_Sensor_B_Pin) || __HAL_GPIO_EXTI_GET_FLAG(V1_Sensor_C_Pin) || __HAL_GPIO_EXTI_GET_FLAG(V1_Sensor_D_Pin)){
+		  DRV_ProcessSensorV1();
+	  }
   }
   /* USER CODE END EXTI4_15_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_4);
@@ -162,7 +169,6 @@ void EXTI4_15_IRQHandler(void)
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_6);
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_7);
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_8);
-  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_9);
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_15);
   /* USER CODE BEGIN EXTI4_15_IRQn 1 */
 

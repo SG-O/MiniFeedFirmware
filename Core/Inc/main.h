@@ -69,7 +69,6 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define Button_B_Pin GPIO_PIN_9
 #define Button_B_GPIO_Port GPIOB
-#define Button_B_EXTI_IRQn EXTI4_15_IRQn
 #define HW_MV_Pin GPIO_PIN_14
 #define HW_MV_GPIO_Port GPIOC
 #define M_EN_Pin GPIO_PIN_0
@@ -83,6 +82,9 @@ void Error_Handler(void);
 #define M_Fault_Pin GPIO_PIN_4
 #define M_Fault_GPIO_Port GPIOA
 #define M_Fault_EXTI_IRQn EXTI4_15_IRQn
+#define Sensor_F_A_Pin GPIO_PIN_5
+#define Sensor_F_A_GPIO_Port GPIOA
+#define Sensor_F_A_EXTI_IRQn EXTI4_15_IRQn
 #define Sensor_A_Pin GPIO_PIN_6
 #define Sensor_A_GPIO_Port GPIOA
 #define Sensor_A_EXTI_IRQn EXTI4_15_IRQn
@@ -95,8 +97,15 @@ void Error_Handler(void);
 #define HW_V1_GPIO_Port GPIOB
 #define ID_Pin GPIO_PIN_2
 #define ID_GPIO_Port GPIOB
+#define Sensor_F_B_Pin GPIO_PIN_8
+#define Sensor_F_B_GPIO_Port GPIOA
+#define Sensor_F_B_EXTI_IRQn EXTI4_15_IRQn
+#define COM_SCL_Pin GPIO_PIN_9
+#define COM_SCL_GPIO_Port GPIOA
 #define OLED_RESET_Pin GPIO_PIN_6
 #define OLED_RESET_GPIO_Port GPIOC
+#define COM_SDA_Pin GPIO_PIN_10
+#define COM_SDA_GPIO_Port GPIOA
 #define OLED_SCL_Pin GPIO_PIN_11
 #define OLED_SCL_GPIO_Port GPIOA
 #define OLED_SDA_Pin GPIO_PIN_12
@@ -114,16 +123,35 @@ void Error_Handler(void);
 #define LED_GPIO_Port GPIOB
 #define Button_C_Pin GPIO_PIN_5
 #define Button_C_GPIO_Port GPIOB
-#define Button_C_EXTI_IRQn EXTI4_15_IRQn
 #define TX_Pin GPIO_PIN_6
 #define TX_GPIO_Port GPIOB
 #define RX_Pin GPIO_PIN_7
 #define RX_GPIO_Port GPIOB
 #define Button_A_Pin GPIO_PIN_8
 #define Button_A_GPIO_Port GPIOB
-#define Button_A_EXTI_IRQn EXTI4_15_IRQn
 /* USER CODE BEGIN Private defines */
+#define V1_Sensor_A_Pin GPIO_PIN_6
+#define V1_Sensor_A_GPIO_Port GPIOA
+#define V1_Sensor_A_EXTI_IRQn EXTI4_15_IRQn
+#define V1_Sensor_B_Pin GPIO_PIN_5
+#define V1_Sensor_B_GPIO_Port GPIOA
+#define V1_Sensor_B_EXTI_IRQn EXTI4_15_IRQn
+#define V1_Sensor_C_Pin GPIO_PIN_7
+#define V1_Sensor_C_GPIO_Port GPIOA
+#define V1_Sensor_C_EXTI_IRQn EXTI4_15_IRQn
+#define V1_Sensor_D_Pin GPIO_PIN_8
+#define V1_Sensor_D_GPIO_Port GPIOA
+#define V1_Sensor_D_EXTI_IRQn EXTI4_15_IRQn
 
+#define V1_TX_Pin GPIO_PIN_9
+#define V1_TX_GPIO_Port GPIOA
+#define V1_RX_Pin GPIO_PIN_10
+#define V1_RX_GPIO_Port GPIOA
+
+#define V1_COM_SCL_Pin GPIO_PIN_6
+#define V1_COM_SCL_GPIO_Port GPIOB
+#define V1_COM_SDA_Pin GPIO_PIN_7
+#define V1_COM_SDA_GPIO_Port GPIOB
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

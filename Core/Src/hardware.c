@@ -13,6 +13,25 @@ void HW_Setup() {
 		HW_beta = 0;
 	} else {
 		HW_beta = 1;
+		HAL_GPIO_DeInit(COM_SCL_GPIO_Port, COM_SCL_Pin);
+		HAL_GPIO_DeInit(COM_SDA_GPIO_Port, COM_SDA_Pin);
+		HAL_GPIO_DeInit(TX_GPIO_Port, TX_Pin|RX_Pin);
+
+		GPIO_InitTypeDef GPIO_InitStruct0 = {0};
+		GPIO_InitStruct0.Pin = V1_COM_SCL_Pin|V1_COM_SDA_Pin;
+		GPIO_InitStruct0.Mode = GPIO_MODE_AF_OD;
+		GPIO_InitStruct0.Pull = GPIO_PULLUP;
+		GPIO_InitStruct0.Speed = GPIO_SPEED_FREQ_LOW;
+		GPIO_InitStruct0.Alternate = GPIO_AF6_I2C1;
+		HAL_GPIO_Init(V1_COM_SCL_GPIO_Port, &GPIO_InitStruct0);
+
+		GPIO_InitTypeDef GPIO_InitStruct1 = {0};
+		GPIO_InitStruct1.Pin = V1_TX_Pin|V1_RX_Pin;
+		GPIO_InitStruct1.Mode = GPIO_MODE_AF_PP;
+		GPIO_InitStruct1.Pull = GPIO_NOPULL;
+		GPIO_InitStruct1.Speed = GPIO_SPEED_FREQ_LOW;
+		GPIO_InitStruct1.Alternate = GPIO_AF0_USART1;
+		HAL_GPIO_Init(V1_RX_GPIO_Port, &GPIO_InitStruct1);
 	}
 	HW_version = 0;
 	if (!HAL_GPIO_ReadPin(HW_V1_GPIO_Port, HW_V1_Pin)){
@@ -21,6 +40,10 @@ void HW_Setup() {
 	if (!HAL_GPIO_ReadPin(HW_V1_GPIO_Port, HW_V1_Pin)){
 		HW_version += 2;
 	}
+}
+
+uint8_t HW_IsV1() {
+	return HW_beta;
 }
 
 uint64_t HW_GetFirmwareVersion() {

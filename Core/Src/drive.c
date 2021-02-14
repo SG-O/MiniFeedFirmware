@@ -67,10 +67,18 @@ void DRV_Feed(uint8_t uiCaused) {
 	DRV_count = count;
 	DRV_Spin(speed, 1);
 	DRV_speed = speed;
-	if (HAL_GPIO_ReadPin(Sensor_A_GPIO_Port, Sensor_A_Pin)) {
-		DRV_pol = 1;
+	if (HW_IsV1() == 0) {
+		if (HAL_GPIO_ReadPin(Sensor_A_GPIO_Port, Sensor_A_Pin)) {
+			DRV_pol = 1;
+		} else {
+			DRV_pol = 0;
+		}
 	} else {
-		DRV_pol = 0;
+		if (HAL_GPIO_ReadPin(V1_Sensor_A_GPIO_Port, V1_Sensor_A_Pin)) {
+			DRV_pol = 1;
+		} else {
+			DRV_pol = 0;
+		}
 	}
 	PERSIST_DecRemainingParts();
 	if (speed < 128) return;
@@ -90,7 +98,7 @@ void DRV_Feed(uint8_t uiCaused) {
 	HAL_TIM_Base_Start_IT(DRV_delay);
 }
 
-void DRV_ProcessSensor(){
+void DRV_ProcessSensorV0(){
 	if (DRV_count < 1) {
 		if (STATUS_GetStatus() != STATUS_BUSY) return;
 
@@ -104,6 +112,48 @@ void DRV_ProcessSensor(){
 		DRV_pol = 1;
 	}
 	if (!HAL_GPIO_ReadPin(Sensor_A_GPIO_Port, Sensor_A_Pin) && HAL_GPIO_ReadPin(Sensor_B_GPIO_Port, Sensor_B_Pin) && DRV_pol) {
+		if (DRV_count > 0){
+			DRV_count--;
+			update = 1;
+		}
+		DRV_pol = 0;
+	}
+	if ((DRV_count == 1) && (update == 1)) {
+		HAL_TIM_Base_Stop_IT(DRV_delay);
+		int i = 0;
+		while (HAL_TIM_Base_GetState(DRV_delay) != HAL_TIM_STATE_READY) {
+			HAL_Delay(1);
+			i++;
+			if(i > 20) {
+				DRV_speed = DRV_speed >> 1;
+				DRV_Spin(DRV_speed, 1);
+				return;
+			}
+		}
+		DRV_delay->Instance->ARR = (uint32_t)PERSIST_GetMotorSlowDelay();
+		HAL_TIM_Base_Start_IT(DRV_delay);
+	}
+	if (DRV_count < 1) {
+		DRV_Spin(0, 0);
+		HAL_TIM_Base_Stop_IT(DRV_delay);
+		STATUS_SetReady();
+	}
+}
+
+void DRV_ProcessSensorV1(){
+	if (DRV_count < 1) {
+		if (STATUS_GetStatus() != STATUS_BUSY) return;
+
+	}
+	uint8_t update = 0;
+	if (HAL_GPIO_ReadPin(V1_Sensor_A_GPIO_Port, V1_Sensor_A_Pin) && !HAL_GPIO_ReadPin(V1_Sensor_B_GPIO_Port, V1_Sensor_B_Pin) && !DRV_pol) {
+		if (DRV_count > 0){
+			DRV_count --;
+			update = 1;
+		}
+		DRV_pol = 1;
+	}
+	if (!HAL_GPIO_ReadPin(V1_Sensor_A_GPIO_Port, V1_Sensor_A_Pin) && HAL_GPIO_ReadPin(V1_Sensor_B_GPIO_Port, V1_Sensor_B_Pin) && DRV_pol) {
 		if (DRV_count > 0){
 			DRV_count--;
 			update = 1;

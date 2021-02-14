@@ -21,7 +21,8 @@ void DRV_Wake(void);
 void DRV_Sleep(void);
 void DRV_Spin(uint8_t speed, uint8_t direction);
 void DRV_Feed(uint8_t uiCaused);
-void DRV_ProcessSensor();
-void DRV_ProcessTimer();
+void DRV_ProcessSensorV0(void);
+void DRV_ProcessSensorV1(void);
+void DRV_ProcessTimer(void);
 
 #endif /* DRIVE_H_ */

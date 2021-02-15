@@ -21,40 +21,40 @@ void EEPROM_Setup(I2C_HandleTypeDef *hi2c) {
 
 uint16_t EEPROM_Read(uint16_t address, uint16_t length) {
 	if (length > 128) return 0;
-	uint16_t leftInPage;
-	uint16_t read = 0;
+	uint16_t leftInPage; // A page is EEPROM_PAGE_SIZE long. Reading outside the page boundary is not strictly illegal. This is just to be cautious.
+	uint16_t read = 0; // Total bytes read.
 	HAL_StatusTypeDef result;
 	while (length > 0) {
-		leftInPage = EEPROM_PAGE_SIZE - (address % EEPROM_PAGE_SIZE);
+		leftInPage = EEPROM_PAGE_SIZE - (address % EEPROM_PAGE_SIZE); // Calculate the number of bytes until the end of the page
 		if (length < leftInPage) {
-			leftInPage = length;
+			leftInPage = length; // Don't read more bytes than required
 		}
-		result = HAL_I2C_Mem_Read(EEPROM_hi2c, EEPROM_ADDRESS << 1, address, I2C_MEMADD_SIZE_16BIT, &EEPROM_buffer[read], leftInPage, EEPROM_TIMEOUT);
-		if (result != HAL_OK) return read;
-		length -= leftInPage;
-		address += leftInPage;
-		read += leftInPage;
-		HAL_Delay(EEPROM_READ_DELAY);
+		result = HAL_I2C_Mem_Read(EEPROM_hi2c, EEPROM_ADDRESS << 1, address, I2C_MEMADD_SIZE_16BIT, &EEPROM_buffer[read], leftInPage, EEPROM_TIMEOUT); //Read the data into the buffer
+		if (result != HAL_OK) return read; // If something went wrong return the actual number of bytes read.
+		length -= leftInPage; // Remove the bytes read from the bytes to read
+		address += leftInPage; // Move the address to the next read position
+		read += leftInPage; // Add the bytes read to the total
+		HAL_Delay(EEPROM_READ_DELAY); // Just to be safe a little delay
 	}
 	return read;
 }
 
 uint16_t EEPROM_Write(uint16_t address, uint16_t length) {
 	if (length > 128) return 0;
-	uint16_t leftInPage;
-	uint16_t written = 0;
+	uint16_t leftInPage; // A page is EEPROM_PAGE_SIZE long. Writing outside the page boundary is not permitted.
+	uint16_t written = 0; // Total bytes written.
 	HAL_StatusTypeDef result;
 	while (length > 0) {
-		leftInPage = EEPROM_PAGE_SIZE - (address % EEPROM_PAGE_SIZE);
+		leftInPage = EEPROM_PAGE_SIZE - (address % EEPROM_PAGE_SIZE); // Calculate the number of bytes until the end of the page
 		if (length < leftInPage) {
-			leftInPage = length;
+			leftInPage = length; // Don't write more bytes than required
 		}
-		result = HAL_I2C_Mem_Write(EEPROM_hi2c, EEPROM_ADDRESS << 1, address, I2C_MEMADD_SIZE_16BIT, &EEPROM_buffer[written], leftInPage, EEPROM_TIMEOUT);
-		if (result != HAL_OK) return written;
-		length -= leftInPage;
-		address += leftInPage;
-		written += leftInPage;
-		HAL_Delay(EEPROM_WRITE_DELAY);
+		result = HAL_I2C_Mem_Write(EEPROM_hi2c, EEPROM_ADDRESS << 1, address, I2C_MEMADD_SIZE_16BIT, &EEPROM_buffer[written], leftInPage, EEPROM_TIMEOUT); //Write the data from the buffer to the EEPROM
+		if (result != HAL_OK) return written; // If something went wrong return the actual number of bytes written.
+		length -= leftInPage; // Remove the bytes written from the bytes to write
+		address += leftInPage; // Move the address to the next write position
+		written += leftInPage;  // Add the bytes written to the total
+		HAL_Delay(EEPROM_WRITE_DELAY); // This delay is required
 	}
 	return written;
 }

@@ -46,6 +46,11 @@ void PERSIST_LoadDefaults() {
 void PERSIST_Setup(I2C_HandleTypeDef *hi2c){
 	PERSIST_hi2c = hi2c;
 	PERSIST_LoadDefaults();
+	if (HW_IsV1() == 1) {
+		EEPROM_Setup(hi2c);
+		PERSIST_totalParts = EEPROM_ReadInt32(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_TOTAL_PARTS_OFFSET, PERSIST_totalParts);
+		if (PERSIST_totalParts == -1) PERSIST_SetTotalParts(CONFIG_DEFAULT_TOTAL_PARTS);
+	}
 }
 
 void PERSIST_SetI2CAddress(uint8_t address) {
@@ -94,6 +99,9 @@ void PERSIST_SetMotorSlowDelay(uint16_t motorSlowDelay) {
 
 void PERSIST_SetTotalParts(int32_t totalParts) {
 	PERSIST_totalParts = totalParts;
+	if (HW_IsV1() == 1) {
+		EEPROM_WriteInt32(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_TOTAL_PARTS_OFFSET, totalParts);
+	}
 }
 
 void PERSIST_SetRemainingParts(int32_t remainingParts) {

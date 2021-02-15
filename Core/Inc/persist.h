@@ -9,6 +9,7 @@
 #define INC_PERSIST_H_
 
 #include "main.h"
+#include "eeprom.h"
 
 #define PERSIST_I2C_ADDRESS 0x3C
 

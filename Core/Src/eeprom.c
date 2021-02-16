@@ -111,43 +111,43 @@ int8_t EEPROM_ReadInt8(uint16_t address, int8_t def) {
 //--Writes--
 uint16_t EEPROM_WriteString(uint16_t address, char *strg, uint16_t length) {
 	memcpy(EEPROM_buffer, strg, length);
-	if (EEPROM_Read(address, length) != length) return 0;
+	if (EEPROM_Write(address, length) != length) return 0;
 	return length;
 }
 
 uint16_t EEPROM_WriteUint32(uint16_t address, uint32_t data) {
 	memcpy(EEPROM_buffer, &data, 4);
-	if (EEPROM_Read(address, 4) != 4) return 0;
+	if (EEPROM_Write(address, 4) != 4) return 0;
 	return 4;
 }
 
 uint16_t EEPROM_WriteInt32(uint16_t address, int32_t data) {
 	memcpy(EEPROM_buffer, &data, 4);
-	if (EEPROM_Read(address, 4) != 4) return 0;
+	if (EEPROM_Write(address, 4) != 4) return 0;
 	return 4;
 }
 
 uint16_t EEPROM_WriteUint16(uint16_t address, uint16_t data) {
 	memcpy(EEPROM_buffer, &data, 2);
-	if (EEPROM_Read(address, 2) != 2) return 0;
+	if (EEPROM_Write(address, 2) != 2) return 0;
 	return 2;
 }
 
 uint16_t EEPROM_WriteInt16(uint16_t address, int16_t data) {
 	memcpy(EEPROM_buffer, &data, 2);
-	if (EEPROM_Read(address, 2) != 2) return 0;
+	if (EEPROM_Write(address, 2) != 2) return 0;
 	return 2;
 }
 
 uint16_t EEPROM_WriteUint8(uint16_t address, uint8_t data) {
 	memcpy(EEPROM_buffer, &data, 1);
-	if (EEPROM_Read(address, 1) != 1) return 0;
+	if (EEPROM_Write(address, 1) != 1) return 0;
 	return 1;
 }
 
 uint16_t EEPROM_WriteInt8(uint16_t address, int8_t data) {
 	memcpy(EEPROM_buffer, &data, 1);
-	if (EEPROM_Read(address, 1) != 1) return 0;
+	if (EEPROM_Write(address, 1) != 1) return 0;
 	return 1;
 }
 

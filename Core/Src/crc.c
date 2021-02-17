@@ -50,3 +50,9 @@ uint8_t CRC_Calculate8L(uint8_t *input, uint8_t inputLength) {
 	CRC_crcH = (crc >> 8) & 0xFF;
 	return res;
 }
+
+uint32_t CRC_Calculate32(uint8_t *input, uint8_t inputLength) {
+	if (inputLength < 1) return 0;
+	uint8_t CRCLength = CRC_Condition(input, inputLength);
+	return CRC_Calculate(preConditioned, CRCLength);
+}

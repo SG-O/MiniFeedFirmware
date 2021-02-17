@@ -16,5 +16,6 @@ CRC_HandleTypeDef *CRC_hcrc;
 void CRC_Start(CRC_HandleTypeDef *hcrc);
 uint8_t CRC_Get16H(void);
 uint8_t CRC_Calculate8L(uint8_t *input, uint8_t inputLength);
+uint32_t CRC_Calculate32(uint8_t *input, uint8_t inputLength);
 
 #endif /* INC_CRC_H_ */

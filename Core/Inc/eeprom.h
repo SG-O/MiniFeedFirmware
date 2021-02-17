@@ -9,16 +9,17 @@
 #define INC_EEPROM_H_
 
 #include "main.h"
+#include "ascii85.h"
 
 #define EEPROM_FORMAT_VERSION 0x00
 
 #define EEPROM_HEADER_OFFSET 0x0000
 #define EEPROM_HEADER_FORMAT_VERSION_OFFSET 0x00
-#define EEPROM_HEADER_MEMORY_SIZE_OFFSET 0x0C
 #define EEPROM_HEADER_DEVICE_ID_0_OFFSET 0x10
 #define EEPROM_HEADER_DEVICE_ID_1_OFFSET 0x14
 #define EEPROM_HEADER_DEVICE_ID_2_OFFSET 0x18
 #define EEPROM_HEADER_CRC_OFFSET 0x1C
+#define EEPROM_HEADER_LENGTH 0x20
 
 
 #define EEPROM_CONFIG_0_OFFSET 0x0020
@@ -74,6 +75,8 @@
 #define EEPROM_SPECIAL_LENGTH 0x80
 
 
+#define EEPROM_MAXIMUM_WRITES 1000000
+
 #define EEPROM_PAGE_SIZE 32
 #define EEPROM_ADDRESS 0b01010000
 #define EEPROM_TIMEOUT 50
@@ -106,8 +109,12 @@ uint16_t EEPROM_WriteInt8(uint16_t address, int8_t data);
 void EEPROM_UpdateCounterSlot(void);
 uint16_t EEPROM_CounterWriteUint32(uint16_t address, uint32_t data);
 uint16_t EEPROM_CounterWriteInt32(uint16_t address, int32_t data);
+uint16_t EEPROM_CounterCount(uint64_t totalFeeds, int32_t remainingParts);
+uint32_t EEPROM_CounterReadUint32(uint16_t address, uint32_t def);
+int32_t EEPROM_CounterReadInt32(uint16_t address, int32_t def);
+uint64_t EEPROM_CounterCalcTotalFeeds(uint32_t readValue);
 
 //--Util--
 uint32_t EEPROM_CheckUpdateRowCounter(uint16_t address);
-
+uint8_t EEPROM_CheckHeader(void);
 #endif /* INC_EEPROM_H_ */

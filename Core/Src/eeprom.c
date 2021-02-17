@@ -12,10 +12,13 @@ uint8_t EEPROM_buffer[128];
 
 uint32_t EEPROM_counterValue;
 uint16_t EEPROM_counterSlot;
+uint8_t EEPROM_initialized = 0;
+uint64_t EEPROM_previousTotalFeeds = 0;
 
 void EEPROM_Setup(I2C_HandleTypeDef *hi2c) {
 	EEPROM_hi2c = hi2c;
 	EEPROM_UpdateCounterSlot();
+	EEPROM_CheckHeader();
 }
 
 
@@ -41,6 +44,7 @@ uint16_t EEPROM_Read(uint16_t address, uint16_t length) {
 
 uint16_t EEPROM_Write(uint16_t address, uint16_t length) {
 	if (length > 128) return 0;
+	if (EEPROM_initialized != 1) return 0;
 	uint16_t leftInPage; // A page is EEPROM_PAGE_SIZE long. Writing outside the page boundary is not permitted.
 	uint16_t written = 0; // Total bytes written.
 	HAL_StatusTypeDef result;
@@ -154,18 +158,19 @@ uint16_t EEPROM_WriteInt8(uint16_t address, int8_t data) {
 //--Counter--
 void EEPROM_UpdateCounterSlot() {
 	for (uint16_t i = 0; i < EEPROM_COUNTER_SLOTS; i++) {
-		EEPROM_counterValue = EEPROM_ReadUint32(EEPROM_COUNTER_OFFSET + (i << 4), 1000000);
+		EEPROM_counterValue = EEPROM_ReadUint32(EEPROM_COUNTER_OFFSET + (i << 4), EEPROM_MAXIMUM_WRITES);
 		if (EEPROM_counterValue == 0xFFFFFFFF) EEPROM_counterValue = 0;
-		if (EEPROM_counterValue < 1000000) {
+		if (EEPROM_counterValue < EEPROM_MAXIMUM_WRITES) {
 			EEPROM_counterSlot = i;
 			return;
 		}
+		EEPROM_previousTotalFeeds += EEPROM_ReadUint32(EEPROM_COUNTER_OFFSET + (i << 4) + EEPROM_COUNTER_TOTAL_FEEDS_OFFSET, 0);
 	}
 	EEPROM_counterSlot = EEPROM_COUNTER_SLOTS;
 }
 
 uint16_t EEPROM_CounterWriteUint32(uint16_t address, uint32_t data) {
-	if (EEPROM_counterValue >= 1000000) EEPROM_UpdateCounterSlot();
+	if (EEPROM_counterValue >= EEPROM_MAXIMUM_WRITES) EEPROM_UpdateCounterSlot();
 	if (EEPROM_counterSlot >= EEPROM_COUNTER_SLOTS) return 0;
 	EEPROM_counterValue++;
 	address += EEPROM_counterSlot << 4;
@@ -174,20 +179,154 @@ uint16_t EEPROM_CounterWriteUint32(uint16_t address, uint32_t data) {
 }
 
 uint16_t EEPROM_CounterWriteInt32(uint16_t address, int32_t data) {
-	if (EEPROM_counterValue >= 1000000) EEPROM_UpdateCounterSlot();
-		if (EEPROM_counterSlot >= EEPROM_COUNTER_SLOTS) return 0;
-		EEPROM_counterValue++;
-		address += EEPROM_counterSlot << 4;
-		if (EEPROM_WriteUint32(address & 0xFFF0, EEPROM_counterValue) != 4) return 0;
-		return EEPROM_WriteInt32(address, data);
+	if (EEPROM_counterValue >= EEPROM_MAXIMUM_WRITES) EEPROM_UpdateCounterSlot();
+	if (EEPROM_counterSlot >= EEPROM_COUNTER_SLOTS) return 0;
+	EEPROM_counterValue++;
+	address += EEPROM_counterSlot << 4;
+	if (EEPROM_WriteUint32(address & 0xFFF0, EEPROM_counterValue) != 4) return 0;
+	return EEPROM_WriteInt32(address, data);
+}
+
+uint16_t EEPROM_CounterCount(uint64_t totalFeeds, int32_t remainingParts) {
+	if (EEPROM_counterValue >= EEPROM_MAXIMUM_WRITES) EEPROM_UpdateCounterSlot();
+	if (EEPROM_counterSlot >= EEPROM_COUNTER_SLOTS) return 0;
+	EEPROM_counterValue++;
+	uint32_t totalFeedsRemaining = (uint32_t)((totalFeeds - EEPROM_previousTotalFeeds) & 0xFFFFFFFFL);
+	uint16_t address = (EEPROM_counterSlot << 4) + EEPROM_COUNTER_OFFSET;
+	if (EEPROM_WriteUint32(address & 0xFFF0, EEPROM_counterValue) != 4) return 0;
+	EEPROM_WriteUint32(address + EEPROM_COUNTER_TOTAL_FEEDS_OFFSET, totalFeedsRemaining);
+	return EEPROM_WriteInt32(address + EEPROM_COUNTER_REMAINING_PARTS_OFFSET, remainingParts);
+}
+
+uint32_t EEPROM_CounterReadUint32(uint16_t address, uint32_t def) {
+	if (EEPROM_counterValue >= EEPROM_MAXIMUM_WRITES) EEPROM_UpdateCounterSlot();
+	if (EEPROM_counterSlot >= EEPROM_COUNTER_SLOTS) return def;
+	address += EEPROM_counterSlot << 4;
+	return EEPROM_ReadUint32(address, def);
+}
+
+int32_t EEPROM_CounterReadInt32(uint16_t address, int32_t def) {
+	if (EEPROM_counterValue >= EEPROM_MAXIMUM_WRITES) EEPROM_UpdateCounterSlot();
+	if (EEPROM_counterSlot >= EEPROM_COUNTER_SLOTS) return def;
+	address += EEPROM_counterSlot << 4;
+	return EEPROM_ReadInt32(address, def);
+}
+
+uint64_t EEPROM_CounterCalcTotalFeeds(uint32_t readValue) {
+	return EEPROM_previousTotalFeeds + readValue;
 }
 
 //--Util--
 uint32_t EEPROM_CheckUpdateRowCounter(uint16_t address) {
-	uint32_t value = EEPROM_ReadUint32(address & 0xFFF0, 1000000);
+	uint32_t value = EEPROM_ReadUint32(address & 0xFFF0, EEPROM_MAXIMUM_WRITES);
 	if (value == 0xFFFFFFFF) value = 0;
-	if (value >= 1000000) return 1000000;
+	if (value >= EEPROM_MAXIMUM_WRITES) return EEPROM_MAXIMUM_WRITES;
 	value++;
 	EEPROM_WriteUint32(address, value);
 	return value;
 }
+
+uint8_t EEPROM_WriteHeader() {
+	for(int i = 0; i < EEPROM_HEADER_CRC_OFFSET; i++) {
+		EEPROM_buffer[i] = 0xFF;
+	}
+	uint32_t version = EEPROM_FORMAT_VERSION;
+	memcpy(&EEPROM_buffer[EEPROM_HEADER_FORMAT_VERSION_OFFSET], &version, 4);
+	uint32_t id = HAL_GetUIDw0();
+	memcpy(&EEPROM_buffer[EEPROM_HEADER_DEVICE_ID_0_OFFSET], &id, 4);
+	id = HAL_GetUIDw1();
+	memcpy(&EEPROM_buffer[EEPROM_HEADER_DEVICE_ID_1_OFFSET], &id, 4);
+	id = HAL_GetUIDw2();
+	memcpy(&EEPROM_buffer[EEPROM_HEADER_DEVICE_ID_2_OFFSET], &id, 4);
+	uint32_t crc = CRC_Calculate32(EEPROM_buffer, EEPROM_HEADER_CRC_OFFSET);
+	memcpy(&EEPROM_buffer[EEPROM_HEADER_CRC_OFFSET], &crc, 4);
+	if (EEPROM_Write(EEPROM_HEADER_OFFSET, EEPROM_HEADER_LENGTH) == EEPROM_HEADER_LENGTH) {
+		EEPROM_initialized = 1;
+		return EEPROM_initialized;
+	}
+	EEPROM_initialized = 0;
+	return EEPROM_initialized;
+}
+
+uint8_t EEPROM_WriteDefaults() {
+	if (EEPROM_CheckUpdateRowCounter(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_ROW_WRITE_0_OFFSET) < EEPROM_MAXIMUM_WRITES) {
+		EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_PART_PITCH_OFFSET, CONFIG_DEFAULT_PART_PITCH);
+		EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_FEED_SPEED_OFFSET, CONFIG_DEFAULT_FEED_SPEED);
+		EEPROM_WriteUint16(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_LOW_PARTS_WARNING_OFFSET, CONFIG_DEFAULT_LOW_PARTS_WARN);
+	}
+	if (EEPROM_CheckUpdateRowCounter(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_ROW_WRITE_1_OFFSET) < EEPROM_MAXIMUM_WRITES) {
+		EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_DISPLAY_BRIGHTNESS_OFFSET, CONFIG_DEFAULT_DISPLAY_BRIGHTNESS);
+		EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_MOTOR_DIRECTION_OFFSET, CONFIG_DEFAULT_MOTOR_DIRECTION);
+		EEPROM_WriteUint16(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_MOTOR_SLOWDOWN_DELAY_OFFSET, CONFIG_DEFAULT_MOTOR_SLOWDOWN_DELAY);
+	}
+	if (EEPROM_CheckUpdateRowCounter(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_ROW_WRITE_2_OFFSET) < EEPROM_MAXIMUM_WRITES) {
+		EEPROM_WriteInt32(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_TOTAL_PARTS_OFFSET, CONFIG_DEFAULT_TOTAL_PARTS);
+	}
+	EEPROM_UpdateCounterSlot();
+	EEPROM_CounterWriteUint32(EEPROM_COUNTER_OFFSET + EEPROM_COUNTER_TOTAL_FEEDS_OFFSET, 0);
+	EEPROM_CounterWriteInt32(EEPROM_COUNTER_OFFSET + EEPROM_COUNTER_REMAINING_PARTS_OFFSET, CONFIG_DEFAULT_REMAINING_PARTS);
+	if (EEPROM_CheckUpdateRowCounter(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_ROW_WRITE_3_OFFSET) < EEPROM_MAXIMUM_WRITES) {
+		char id[EEPROM_CONFIG_SHORT_ID_LENGTH];
+		for (int i = 0; i < EEPROM_CONFIG_SHORT_ID_LENGTH; i++) {
+			id[i] = 0;
+		}
+		uint32_t devID = HAL_GetUIDw0() ^ HAL_GetUIDw1() ^ HAL_GetUIDw2();
+		uint8_t devIDByte[4];
+		*(uint32_t*)&devIDByte = devID;
+		encode_ascii85(devIDByte, 4, id, EEPROM_CONFIG_SHORT_ID_LENGTH);
+		EEPROM_WriteString(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_SHORT_ID_OFFSET, id, EEPROM_CONFIG_SHORT_ID_LENGTH);
+		EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_SHORT_ID_FILLER_0_OFFSET, 0);
+		EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_SHORT_ID_FILLER_1_OFFSET, 0);
+	}
+	if (EEPROM_CheckUpdateRowCounter(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_LONG_ID_WRITES_OFFSET) < EEPROM_MAXIMUM_WRITES) {
+		for (int i = 0; i < EEPROM_CONFIG_LONG_ID_LENGTH; i++) {
+			EEPROM_buffer[i] = 0;
+			memcpy(EEPROM_buffer, CONFIG_DEFAULT_LONG_PARTS_ID, sizeof(CONFIG_DEFAULT_LONG_PARTS_ID));
+		}
+		EEPROM_Write(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_LONG_ID_OFFSET, EEPROM_CONFIG_LONG_ID_LENGTH);
+		EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_LONG_ID_FILLER_OFFSET, 0);
+	}
+	return EEPROM_initialized;
+}
+
+uint8_t EEPROM_CheckHeader() {
+	if (EEPROM_Read(EEPROM_HEADER_OFFSET, EEPROM_HEADER_LENGTH) != EEPROM_HEADER_LENGTH) {
+		EEPROM_initialized = 0;
+		return EEPROM_initialized;
+	}
+	uint32_t version;
+	memcpy(&version, &EEPROM_buffer[EEPROM_HEADER_FORMAT_VERSION_OFFSET], 4);
+	if (version == 0xFF) {
+		EEPROM_WriteHeader();
+		return EEPROM_WriteDefaults();
+	} else if (version != EEPROM_FORMAT_VERSION) {
+		EEPROM_initialized = 0;
+		return EEPROM_initialized;
+	}
+	uint32_t crc;
+	memcpy(&crc, &EEPROM_buffer[EEPROM_HEADER_CRC_OFFSET], 4);
+	if (CRC_Calculate32(EEPROM_buffer, EEPROM_HEADER_CRC_OFFSET) != crc) {
+		EEPROM_initialized = 0;
+		return EEPROM_initialized;
+	}
+	uint32_t id;
+	memcpy(&id, &EEPROM_buffer[EEPROM_HEADER_DEVICE_ID_0_OFFSET], 4);
+	if (id != HAL_GetUIDw0()) {
+		EEPROM_initialized = 0;
+		return EEPROM_initialized;
+	}
+	memcpy(&id, &EEPROM_buffer[EEPROM_HEADER_DEVICE_ID_1_OFFSET], 4);
+	if (id != HAL_GetUIDw1()) {
+		EEPROM_initialized = 0;
+		return EEPROM_initialized;
+	}
+	memcpy(&id, &EEPROM_buffer[EEPROM_HEADER_DEVICE_ID_2_OFFSET], 4);
+	if (id != HAL_GetUIDw2()) {
+		EEPROM_initialized = 0;
+		return EEPROM_initialized;
+	}
+	EEPROM_initialized = 1;
+	return EEPROM_initialized;
+}
+
+

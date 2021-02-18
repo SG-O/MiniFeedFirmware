@@ -83,6 +83,8 @@ void DRV_Feed(uint8_t uiCaused) {
 	PERSIST_DecRemainingParts();
 	if (speed < 128) return;
 	if (DRV_count > 1) return;
+	uint16_t slowdown = PERSIST_GetMotorSlowDelay();
+	if (slowdown < 1) return;
 	HAL_TIM_Base_Stop_IT(DRV_delay);
 	int i = 0;
 	while (HAL_TIM_Base_GetState(DRV_delay) != HAL_TIM_STATE_READY) {
@@ -94,7 +96,7 @@ void DRV_Feed(uint8_t uiCaused) {
 			return;
 		}
 	}
-	DRV_delay->Instance->ARR = (uint32_t)PERSIST_GetMotorSlowDelay();
+	DRV_delay->Instance->ARR = (uint32_t)slowdown;
 	HAL_TIM_Base_Start_IT(DRV_delay);
 }
 

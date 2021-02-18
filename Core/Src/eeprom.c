@@ -227,6 +227,7 @@ uint32_t EEPROM_CheckUpdateRowCounter(uint16_t address) {
 }
 
 uint8_t EEPROM_WriteHeader() {
+	EEPROM_initialized = 1;
 	for(int i = 0; i < EEPROM_HEADER_CRC_OFFSET; i++) {
 		EEPROM_buffer[i] = 0xFF;
 	}

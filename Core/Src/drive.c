@@ -76,8 +76,6 @@ void DRV_Feed(uint8_t uiCaused) {
 		GPIO_PinState sA = HAL_GPIO_ReadPin(V1_Sensor_A_GPIO_Port, V1_Sensor_A_Pin);
 		GPIO_PinState sD = HAL_GPIO_ReadPin(V1_Sensor_D_GPIO_Port, V1_Sensor_D_Pin);
 		if (!sA && !sD) {
-			DRV_pol = 1;
-		} else if (!sA && !sD) {
 			DRV_pol = 0;
 		} else if (!sA && sD) {
 			DRV_pol = 1;

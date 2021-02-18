@@ -14,6 +14,7 @@
 #include "persist.h"
 #include "conversion.h"
 #include "hardware.h"
+#include "eeprom.h"
 
 #define OPCODE_REMAINING_PARTS 0
 #define OPCODE_TOTAL_PARTS 1
@@ -30,6 +31,7 @@
 #define OPCODE_FEED 129
 #define OPCODE_RESET_ERROR 130
 #define OPCODE_FORCE_ERROR 131
+#define OPCODE_INIT_EEPROM 250
 #define OPCODE_ENTER_BOOTLOADER 251
 #define OPCODE_RESET 252
 #define OPCODE_READ_SHORT 253

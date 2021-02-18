@@ -101,6 +101,14 @@ uint8_t OPCODE_ParseShort(uint8_t opcode){
 		case OPCODE_FORCE_ERROR:
 			ERROR_SetError(ERROR_USER_CAUSED);
 			break;
+		case OPCODE_INIT_EEPROM:
+			if (HW_IsV1() == 1) {
+				EEPROM_WriteHeader();
+				EEPROM_WriteDefaults();
+			} else {
+				ERROR_SetError(ERROR_UNKNOWN_METHOD);
+			}
+			break;
 		case OPCODE_ENTER_BOOTLOADER:
 			HW_StartBootloader();
 			break;

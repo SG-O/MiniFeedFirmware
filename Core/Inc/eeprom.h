@@ -116,5 +116,7 @@ uint64_t EEPROM_CounterCalcTotalFeeds(uint32_t readValue);
 
 //--Util--
 uint32_t EEPROM_CheckUpdateRowCounter(uint16_t address);
+uint8_t EEPROM_WriteHeader(void);
+uint8_t EEPROM_WriteDefaults(void);
 uint8_t EEPROM_CheckHeader(void);
 #endif /* INC_EEPROM_H_ */

@@ -296,7 +296,7 @@ uint8_t EEPROM_CheckHeader() {
 	}
 	uint32_t version;
 	memcpy(&version, &EEPROM_buffer[EEPROM_HEADER_FORMAT_VERSION_OFFSET], 4);
-	if (version == 0xFF) {
+	if (version == 0xFFFFFFFF) {
 		EEPROM_WriteHeader();
 		return EEPROM_WriteDefaults();
 	} else if (version != EEPROM_FORMAT_VERSION) {

@@ -139,6 +139,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   BACKUP_Setup(&hrtc);
   HW_Setup();
+  CRC_Start(&hcrc);
   PERSIST_Setup(&hi2c2);
   DISP_Setup(&hi2c2);
   HW_CheckForBootloader(wdReset);
@@ -147,7 +148,6 @@ int main(void)
   if (wdReset) ERROR_SetError(ERROR_WDT);
   ANALOG_Setup(&hadc1);
   DRV_Start(&htim2, &htim16);
-  CRC_Start(&hcrc);
   HAL_Delay(1000);
   startupDone = 1;
   MX_WWDG_Init();

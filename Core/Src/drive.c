@@ -41,7 +41,12 @@ void DRV_Spin(uint8_t speed, uint8_t direction) {
 }
 
 void DRV_Feed(uint8_t uiCaused) {
-	uint8_t count = PERSIST_GetPartPitch() >> 2;
+	uint8_t count = 0;
+	if (HW_IsV1() == 1) {
+		count = PERSIST_GetPartPitch() >> 1;
+	} else {
+		count = PERSIST_GetPartPitch() >> 2;
+	}
 	uint8_t speed = PERSIST_GetFeedSpeed();
 	if (speed < 1) {
 		ERROR_SetError(ERROR_CONFIG_ERROR);
@@ -67,14 +72,22 @@ void DRV_Feed(uint8_t uiCaused) {
 	DRV_count = count;
 	DRV_Spin(speed, 1);
 	DRV_speed = speed;
-	if (HW_IsV1() == 0) {
-		if (HAL_GPIO_ReadPin(Sensor_A_GPIO_Port, Sensor_A_Pin)) {
+	if (HW_IsV1() == 1) {
+		GPIO_PinState sA = HAL_GPIO_ReadPin(V1_Sensor_A_GPIO_Port, V1_Sensor_A_Pin);
+		GPIO_PinState sD = HAL_GPIO_ReadPin(V1_Sensor_D_GPIO_Port, V1_Sensor_D_Pin);
+		if (!sA && !sD) {
 			DRV_pol = 1;
-		} else {
+		} else if (!sA && !sD) {
 			DRV_pol = 0;
+		} else if (!sA && sD) {
+			DRV_pol = 1;
+		} else if (sA && sD) {
+			DRV_pol = 2;
+		} else {
+			DRV_pol = 3;
 		}
 	} else {
-		if (HAL_GPIO_ReadPin(V1_Sensor_A_GPIO_Port, V1_Sensor_A_Pin)) {
+		if (HAL_GPIO_ReadPin(Sensor_A_GPIO_Port, Sensor_A_Pin)) {
 			DRV_pol = 1;
 		} else {
 			DRV_pol = 0;
@@ -106,7 +119,7 @@ void DRV_ProcessSensorV0(){
 
 	}
 	uint8_t update = 0;
-	if (HAL_GPIO_ReadPin(Sensor_A_GPIO_Port, Sensor_A_Pin) && !HAL_GPIO_ReadPin(Sensor_B_GPIO_Port, Sensor_B_Pin) && !DRV_pol) {
+	if (HAL_GPIO_ReadPin(Sensor_A_GPIO_Port, Sensor_A_Pin) && !DRV_pol) {
 		if (DRV_count > 0){
 			DRV_count --;
 			update = 1;
@@ -120,7 +133,8 @@ void DRV_ProcessSensorV0(){
 		}
 		DRV_pol = 0;
 	}
-	if ((DRV_count == 1) && (update == 1)) {
+	uint16_t slowdown = PERSIST_GetMotorSlowDelay();
+	if ((DRV_count == 1) && (update == 1) && (slowdown > 0)) {
 		HAL_TIM_Base_Stop_IT(DRV_delay);
 		int i = 0;
 		while (HAL_TIM_Base_GetState(DRV_delay) != HAL_TIM_STATE_READY) {
@@ -132,7 +146,7 @@ void DRV_ProcessSensorV0(){
 				return;
 			}
 		}
-		DRV_delay->Instance->ARR = (uint32_t)PERSIST_GetMotorSlowDelay();
+		DRV_delay->Instance->ARR = (uint32_t)slowdown;
 		HAL_TIM_Base_Start_IT(DRV_delay);
 	}
 	if (DRV_count < 1) {
@@ -148,21 +162,40 @@ void DRV_ProcessSensorV1(){
 
 	}
 	uint8_t update = 0;
-	if (HAL_GPIO_ReadPin(V1_Sensor_A_GPIO_Port, V1_Sensor_A_Pin) && !HAL_GPIO_ReadPin(V1_Sensor_B_GPIO_Port, V1_Sensor_B_Pin) && !DRV_pol) {
+	GPIO_PinState sA = HAL_GPIO_ReadPin(V1_Sensor_A_GPIO_Port, V1_Sensor_A_Pin);
+	GPIO_PinState sB = HAL_GPIO_ReadPin(V1_Sensor_B_GPIO_Port, V1_Sensor_B_Pin);
+	GPIO_PinState sC = HAL_GPIO_ReadPin(V1_Sensor_C_GPIO_Port, V1_Sensor_C_Pin);
+	GPIO_PinState sD = HAL_GPIO_ReadPin(V1_Sensor_D_GPIO_Port, V1_Sensor_D_Pin);
+	if (!sA && sB && !sC && sD && DRV_pol == 0) {
 		if (DRV_count > 0){
 			DRV_count --;
 			update = 1;
 		}
 		DRV_pol = 1;
 	}
-	if (!HAL_GPIO_ReadPin(V1_Sensor_A_GPIO_Port, V1_Sensor_A_Pin) && HAL_GPIO_ReadPin(V1_Sensor_B_GPIO_Port, V1_Sensor_B_Pin) && DRV_pol) {
+	if (sA && !sB && !sC && sD && DRV_pol == 1) {
+		if (DRV_count > 0){
+			DRV_count--;
+			update = 1;
+		}
+		DRV_pol = 2;
+	}
+	if (sA && !sB && sC && !sD && DRV_pol == 2) {
+		if (DRV_count > 0){
+			DRV_count--;
+			update = 1;
+		}
+		DRV_pol = 3;
+	}
+	if (!sA && sB && sC && !sD && DRV_pol == 3) {
 		if (DRV_count > 0){
 			DRV_count--;
 			update = 1;
 		}
 		DRV_pol = 0;
 	}
-	if ((DRV_count == 1) && (update == 1)) {
+	uint16_t slowdown = PERSIST_GetMotorSlowDelay();
+	if ((DRV_count == 1) && (update == 1) && (slowdown > 0)) {
 		HAL_TIM_Base_Stop_IT(DRV_delay);
 		int i = 0;
 		while (HAL_TIM_Base_GetState(DRV_delay) != HAL_TIM_STATE_READY) {
@@ -174,7 +207,7 @@ void DRV_ProcessSensorV1(){
 				return;
 			}
 		}
-		DRV_delay->Instance->ARR = (uint32_t)PERSIST_GetMotorSlowDelay();
+		DRV_delay->Instance->ARR = (uint32_t)slowdown;
 		HAL_TIM_Base_Start_IT(DRV_delay);
 	}
 	if (DRV_count < 1) {

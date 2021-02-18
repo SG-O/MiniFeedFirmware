@@ -103,7 +103,7 @@ uint8_t OPCODE_ParseShort(uint8_t opcode){
 			break;
 		case OPCODE_INIT_EEPROM:
 			if (HW_IsV1() == 1) {
-				void HW_ReInit();
+				HW_ReInit();
 			} else {
 				ERROR_SetError(ERROR_UNKNOWN_METHOD);
 			}

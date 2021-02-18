@@ -10,6 +10,7 @@
 
 #include "main.h"
 #include "ascii85.h"
+#include "backup.h"
 
 #define EEPROM_FORMAT_VERSION 0x00
 
@@ -86,6 +87,8 @@
 I2C_HandleTypeDef *EEPROM_hi2c;
 
 void EEPROM_Setup(I2C_HandleTypeDef *hi2c);
+void EEPROM_CheckForReInit(void);
+void HW_ReInit(void);
 
 //--Reads--
 uint16_t EEPROM_ReadString(uint16_t address, char *strg, uint16_t length);

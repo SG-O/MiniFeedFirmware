@@ -143,6 +143,7 @@ int main(void)
   PERSIST_Setup(&hi2c2);
   DISP_Setup(&hi2c2);
   HW_CheckForBootloader(wdReset);
+  EEPROM_CheckForReInit();
   UI_ShowBoot();
   DISP_SetBrightness(PERSIST_GetDisplayBrightness());
   if (wdReset) ERROR_SetError(ERROR_WDT);

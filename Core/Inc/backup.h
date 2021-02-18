@@ -13,6 +13,7 @@
 #define BACKUP_REG_MESSAGE 0
 
 #define BACKUP_MESSAGE_BOOTLOADER 1 << 0
+#define BACKUP_MESSAGE_INIT_EEPROM 1 << 1
 
 RTC_HandleTypeDef *BACKUP_hrtc;
 

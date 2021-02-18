@@ -21,6 +21,24 @@ void EEPROM_Setup(I2C_HandleTypeDef *hi2c) {
 	EEPROM_CheckHeader();
 }
 
+void EEPROM_CheckForReInit() {
+	if (HW_IsV1() != 1) return;
+	uint32_t backupData = BACKUP_Read(BACKUP_REG_MESSAGE);
+	if ((backupData && (BACKUP_MESSAGE_INIT_EEPROM)) == 0) return;
+	backupData &= ~(BACKUP_MESSAGE_INIT_EEPROM);
+	BACKUP_Write(BACKUP_REG_MESSAGE, backupData);
+	EEPROM_WriteHeader();
+	EEPROM_WriteDefaults();
+	NVIC_SystemReset();
+}
+
+void HW_ReInit() {
+	uint32_t backupData = BACKUP_Read(BACKUP_REG_MESSAGE);
+	backupData |= BACKUP_MESSAGE_INIT_EEPROM;
+	BACKUP_Write(BACKUP_REG_MESSAGE, backupData);
+	NVIC_SystemReset();
+}
+
 
 uint16_t EEPROM_Read(uint16_t address, uint16_t length) {
 	if (length > 128) return 0;

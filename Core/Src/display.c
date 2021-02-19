@@ -1,6 +1,21 @@
 /*
  * display.c
  *
+ * Copyright 2021 SG-O (Joerg Bayer)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
  *  Created on: Jan. 17, 2021
  *      Author: SG-O
  */
@@ -8,7 +23,20 @@
 #include "display.h"
 uint32_t lastBlink = 0;
 
-uint8_t calculateStringOffset(const char *strg, int16_t charWidth) {
+static const uint8_t DISP_LOGO[] = {
+  0x87, 0x07, 0xE3, 0xFF, 0xE3, 0x87, 0x07, 0xE3, 0xFF, 0xE3, 0x87, 0x07,
+  0xFF, 0xFF, 0xFF, 0x07, 0x03, 0x63, 0x84, 0xE3, 0x07, 0x03, 0x63, 0x00,
+  0xE3, 0x07, 0x02, 0x63, 0x00, 0xE3, 0x47, 0x08, 0x63, 0x1C, 0xE3, 0x47,
+  0x08, 0x63, 0x1C, 0xE3, 0x47, 0x08, 0x63, 0x1C, 0xE3, 0xC7, 0x0C, 0x63,
+  0x1C, 0xE3, 0xC7, 0x0C, 0x63, 0x1C, 0xE3, 0xC7, 0x0C, 0x63, 0x1C, 0xE3,
+  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFE,
+  0xFF, 0xFF, 0x1F, 0x00, 0xFE, 0xFF, 0xFF, 0x1F, 0xF0, 0x1F, 0x7F, 0xF8,
+  0x11, 0xF0, 0x07, 0x3C, 0xE0, 0x00, 0x00, 0x43, 0x18, 0x63, 0x00, 0x00,
+  0xE3, 0x08, 0x47, 0x18, 0x00, 0x03, 0x08, 0x40, 0x1C, 0xF0, 0x03, 0x08,
+  0x40, 0x18, 0xF0, 0xE3, 0x1F, 0x7F, 0x18, 0xF0, 0x03, 0x1C, 0xE0, 0x00,
+  0xF0, 0x07, 0x3E, 0xF0, 0x00, };
+
+uint8_t DISP_CalculateStringOffset(const char *strg, int16_t charWidth) {
 	int16_t length = strlen(strg);
 	int16_t width = u8g2_GetDisplayWidth(&u8g2);
 	int16_t totalLength = length * charWidth;
@@ -17,28 +45,30 @@ uint8_t calculateStringOffset(const char *strg, int16_t charWidth) {
 	return (uint8_t)(space>>1);
 }
 
-uint8_t u8x8_stm32_gpio_and_delay(U8X8_UNUSED u8x8_t *u8x8,
+uint8_t DISP_U8x8_stm32_gpio_and_delay(U8X8_UNUSED u8x8_t *u8x8,
     U8X8_UNUSED uint8_t msg, U8X8_UNUSED uint8_t arg_int,
     U8X8_UNUSED void *arg_ptr)
 {
   switch (msg)
   {
   case U8X8_MSG_GPIO_AND_DELAY_INIT:
-    HAL_Delay(1);
-    break;
+	  HAL_Delay(1);
+	  break;
   case U8X8_MSG_DELAY_MILLI:
-    HAL_Delay(arg_int);
-    break;
+	  HAL_Delay(arg_int);
+	  break;
   case U8X8_MSG_GPIO_RESET:
-    HAL_GPIO_WritePin(OLED_RESET_GPIO_Port, OLED_RESET_Pin, arg_int);
-    break;
+	  HAL_GPIO_WritePin(OLED_RESET_GPIO_Port, OLED_RESET_Pin, arg_int);
+	  break;
+  default:
+	  break;
   }
   return 1;
 }
 
-uint8_t u8x8_byte_stm32hal_hw_i2c(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr)
+uint8_t DISP_U8x8_byte_stm32hal_hw_i2c(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr)
 {
-	static uint8_t buffer[32];		/* u8g2/u8x8 will never send more than 32 bytes between START_TRANSFER and END_TRANSFER */
+	static uint8_t buffer[DISP_TX_BUFFER_LENGTH];		/* u8g2/u8x8 will never send more than 32 bytes between START_TRANSFER and END_TRANSFER */
 	static uint8_t buf_idx;
 	uint8_t *data;
 
@@ -70,7 +100,7 @@ uint8_t u8x8_byte_stm32hal_hw_i2c(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, vo
 		{
 			asm("NOP");
 		}
-		HAL_I2C_Master_Transmit(DISP_hi2c, (uint16_t)I2C_ADDRESS<<1, &buffer[0], buf_idx, 10);
+		HAL_I2C_Master_Transmit(DISP_hi2c, (uint16_t)I2C_ADDRESS<<1, &buffer[0], buf_idx, DISP_TX_TIMEOUT);
     	break;
     default:
       return 0;
@@ -81,9 +111,9 @@ uint8_t u8x8_byte_stm32hal_hw_i2c(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, vo
 void DISP_Setup(I2C_HandleTypeDef *hi2c){
 	DISP_hi2c = hi2c;
 	if (HW_IsV1() == 0) {
-		u8g2_Setup_ssd1306_i2c_72x40_er_f(&u8g2, U8G2_R1, u8x8_byte_stm32hal_hw_i2c, u8x8_stm32_gpio_and_delay);
+		u8g2_Setup_ssd1306_i2c_72x40_er_f(&u8g2, U8G2_R1, DISP_U8x8_byte_stm32hal_hw_i2c, DISP_U8x8_stm32_gpio_and_delay);
 	} else {
-		u8g2_Setup_ssd1306_i2c_72x40_er_f(&u8g2, U8G2_R3, u8x8_byte_stm32hal_hw_i2c, u8x8_stm32_gpio_and_delay);
+		u8g2_Setup_ssd1306_i2c_72x40_er_f(&u8g2, U8G2_R3, DISP_U8x8_byte_stm32hal_hw_i2c, DISP_U8x8_stm32_gpio_and_delay);
 	}
 	u8g2_SetI2CAddress(&u8g2, I2C_ADDRESS*2);
 	u8g2_InitDisplay(&u8g2);
@@ -102,7 +132,8 @@ void DISP_SetBrightness(uint8_t bright){
 }
 
 void DISP_DrawInfo(){
-	char snum[16];
+	char snum[DISP_STRING_BUFFER_LENGTH];
+
 	u8g2_ClearBuffer(&u8g2);
 	u8g2_SetFontMode(&u8g2, 1);
 	u8g2_SetFontDirection(&u8g2, 0);
@@ -113,7 +144,7 @@ void DISP_DrawInfo(){
 	u8g2_SetFont(&u8g2, u8g2_font_7x14B_mr);
 	char *id = PERSIST_GetShortPartID();
 	sprintf(snum, "%.5s", id);
-	uint8_t offset = calculateStringOffset(snum, 7);
+	uint8_t offset = DISP_CalculateStringOffset(snum, 7);
 	u8g2_DrawStr(&u8g2, offset, 11, snum);
 	u8g2_SetDrawColor(&u8g2, 1);
 	u8g2_SetFontPosCenter(&u8g2);
@@ -138,7 +169,7 @@ void DISP_DrawInfo(){
 	}
 
 	sprintf(snum, "%ld", feedCount);
-	offset = calculateStringOffset(snum, width);
+	offset = DISP_CalculateStringOffset(snum, width);
 	u8g2_DrawStr(&u8g2, offset, yPos, snum);
 
 	u8g2_SetFontPosCenter(&u8g2);
@@ -151,7 +182,7 @@ void DISP_DrawInfo(){
 	} else {
 		sprintf(snum, "%ld", feedTotal);
 	}
-	offset = calculateStringOffset(snum, 6);
+	offset = DISP_CalculateStringOffset(snum, 6);
 	u8g2_DrawStr(&u8g2, offset, 68, snum);
 	if (PERSIST_GetLowPartWarn() > 0) {
 		if (feedCount < 1) {
@@ -173,6 +204,8 @@ void DISP_DrawInfo(){
 }
 
 void DISP_DrawBoot(){
+	char snum[DISP_STRING_BUFFER_LENGTH];
+
 	u8g2_ClearBuffer(&u8g2);
 	u8g2_SetFontMode(&u8g2, 1);
 	u8g2_SetFontDirection(&u8g2, 0);
@@ -181,7 +214,7 @@ void DISP_DrawBoot(){
 	u8g2_SetFont(&u8g2, u8g2_font_t0_11b_mr);
 	u8g2_DrawXBM(&u8g2, 0, 0, DISP_LOGO_WIDTH, DISP_LOGO_HEIGHT, DISP_LOGO);
 	u8g2_SetDrawColor(&u8g2, 1);
-	char snum[16];
+
 	sprintf(snum, "v%u", VERSION_MAJOR);
 	u8g2_DrawStr(&u8g2, 1, 37, snum);
 	sprintf(snum, ".%u", VERSION_MINOR);
@@ -193,6 +226,8 @@ void DISP_DrawBoot(){
 }
 
 void DISP_DrawError(){
+	char snum[DISP_STRING_BUFFER_LENGTH];
+
 	u8g2_ClearBuffer(&u8g2);
 	u8g2_SetFontMode(&u8g2, 1);
 	u8g2_SetFontDirection(&u8g2, 0);
@@ -200,16 +235,16 @@ void DISP_DrawError(){
 	u8g2_SetDrawColor(&u8g2, 1);
 	u8g2_DrawBox(&u8g2, 0, 13, 40, 60);
 	u8g2_SetFont(&u8g2, u8g2_font_7x14B_mr);
-	uint8_t offset = calculateStringOffset(__STRG_ERROR, 7);
+	uint8_t offset = DISP_CalculateStringOffset(__STRG_ERROR, 7);
 	u8g2_DrawStr(&u8g2, offset, 11, __STRG_ERROR);
 	u8g2_SetDrawColor(&u8g2, 0);
 	u8g2_SetFontPosBaseline(&u8g2);
 	u8g2_SetFont(&u8g2, u8g2_font_t0_11b_mr);
 	u8g2_SetFontPosCenter(&u8g2);
-	char snum[16];
+
 	sprintf(snum, "%u", ERROR_GetError());
 	u8g2_SetFont(&u8g2, u8g2_font_inr24_mn);
-	offset = calculateStringOffset(snum, 20);
+	offset = DISP_CalculateStringOffset(snum, 20);
 	u8g2_DrawStr(&u8g2, offset, 45, snum);
 	if (HAL_GetTick() > lastBlink + 500) {
 		HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
@@ -232,6 +267,8 @@ void DISP_DrawBootloader(){
 }
 
 void DISP_DrawDebug(){
+	char snum[DISP_STRING_BUFFER_LENGTH];
+
 	u8g2_ClearBuffer(&u8g2);
 	u8g2_SetFontMode(&u8g2, 1);
 	u8g2_SetFontDirection(&u8g2, 0);
@@ -240,7 +277,7 @@ void DISP_DrawDebug(){
 	u8g2_DrawBox(&u8g2, 0, 0, 40, 12);
 	u8g2_SetDrawColor(&u8g2, 0);
 	u8g2_SetFont(&u8g2, u8g2_font_7x14B_mr);
-	uint8_t offset = calculateStringOffset(__STRG_DEBUG, 7);
+	uint8_t offset = DISP_CalculateStringOffset(__STRG_DEBUG, 7);
 	u8g2_DrawStr(&u8g2, offset, 11, __STRG_DEBUG);
 	u8g2_SetDrawColor(&u8g2, 1);
 	u8g2_SetFontPosBaseline(&u8g2);
@@ -256,7 +293,6 @@ void DISP_DrawDebug(){
 		u8g2_DrawStr(&u8g2, 1, 36, "S_B Off");
 	}
 
-	char snum[16];
 	sprintf(snum, "%lumA", ANALOG_GetmaMotor());
 	u8g2_DrawStr(&u8g2, 1, 47, snum);
 	sprintf(snum, "%lumV", ANALOG_GetVRef());
@@ -275,7 +311,7 @@ void DISP_DrawMenu(uint8_t entry){
 	u8g2_DrawBox(&u8g2, 0, 0, 40, 12);
 	u8g2_SetDrawColor(&u8g2, 0);
 	u8g2_SetFont(&u8g2, u8g2_font_7x14B_mr);
-	uint8_t offset = calculateStringOffset(__STRG_MENU, 7);
+	uint8_t offset = DISP_CalculateStringOffset(__STRG_MENU, 7);
 	u8g2_DrawStr(&u8g2, offset, 11, __STRG_MENU);
 	u8g2_SetDrawColor(&u8g2, 1);
 	u8g2_SetFontPosBaseline(&u8g2);

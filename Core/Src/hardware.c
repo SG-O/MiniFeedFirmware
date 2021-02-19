@@ -1,6 +1,21 @@
 /*
  * hardware.c
  *
+ * Copyright 2021 SG-O (Joerg Bayer)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
  *  Created on: Jan 17, 2021
  *      Author: SG-O
  */
@@ -48,17 +63,17 @@ uint8_t HW_IsV1() {
 
 uint64_t HW_GetFirmwareVersion() {
 	uint64_t value = VERSION_MAJOR & 0xFFFF;
-	value = value << 16;
+	value = value << CON_SHORT_SHIFT;
 	value |= VERSION_MINOR & 0xFFFF;
-	value = value << 32;
+	value = value << CON_INT_SHIFT;
 	value |= VERSION_PATCH & 0xFFFFFFFF;
 	return value;
 }
 
 uint64_t HW_GetHardwareVersion() {
 	uint64_t value = HW_beta & 0xFF;
-	value = value << 8;
-	value |= HW_version & 0xFF;
+	value = value << CON_BYTE_SHIFT;
+	value |= HW_version & CON_BYTE_MASK;
 	return value;
 }
 
@@ -77,7 +92,7 @@ void HW_StartBootloader() {
 void HW_InitBootloader() {
 	void (*SysMemBootJump)(void);
 	volatile uint32_t addr = 0x1FFF0000;
-	SysMemBootJump = (void (*)(void)) (*((uint32_t *)(addr + 4)));
+	SysMemBootJump = (void (*)(void)) (*((uint32_t *)(addr + 4))); // @suppress("Avoid magic numbers")
 	DISP_DrawBootloader();
 	//Disable all peripheral clocks
 	//Disable used PLL

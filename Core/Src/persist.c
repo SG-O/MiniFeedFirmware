@@ -1,6 +1,21 @@
 /*
  * persist.c
  *
+ * Copyright 2021 SG-O (Joerg Bayer)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
  *  Created on: Jan 20, 2021
  *      Author: SG-O
  */
@@ -20,11 +35,11 @@ uint16_t PERSIST_motorSlowDelay;
 int32_t PERSIST_totalParts;
 int32_t PERSIST_remainingParts;
 uint16_t PERSIST_lowPartWarn;
-char PERSIST_shortPartID[6];
-char PERSIST_longPartID[127];
+char PERSIST_shortPartID[PERSISt_SHORT_ID_LENGTH];
+char PERSIST_longPartID[PERSISt_LONG_ID_LENGTH];
 
 void PERSIST_LoadDefaults() {
-	PERSIST_i2cAddress = 0x50;
+	PERSIST_i2cAddress = PERSIST_INIT_I2C_ADDRESS;
 
 	PERSIST_partPitch = CONFIG_DEFAULT_PART_PITCH;
 	PERSIST_feedSpeed = CONFIG_DEFAULT_FEED_SPEED;
@@ -35,12 +50,12 @@ void PERSIST_LoadDefaults() {
 	PERSIST_remainingParts = CONFIG_DEFAULT_REMAINING_PARTS;
 	PERSIST_lowPartWarn = CONFIG_DEFAULT_LOW_PARTS_WARN;
 	PERSIST_SetLongPartID(CONFIG_DEFAULT_LONG_PARTS_ID, sizeof(CONFIG_DEFAULT_LONG_PARTS_ID));
-	char id[6];
+	char id[PERSISt_SHORT_ID_LENGTH];
 	uint32_t devID = HAL_GetUIDw0() ^ HAL_GetUIDw1() ^ HAL_GetUIDw2();
-	uint8_t devIDByte[4];
+	uint8_t devIDByte[CON_INT_LENGTH];
 	*(uint32_t*)&devIDByte = devID;
-	encode_ascii85(devIDByte, 4, id, 6);
-	PERSIST_SetShortPartID(id, 5);
+	encode_ascii85(devIDByte, CON_INT_LENGTH, id, PERSISt_SHORT_ID_LENGTH);
+	PERSIST_SetShortPartID(id, PERSISt_SHORT_ID_LENGTH - 1);
 }
 
 void PERSIST_LoadFromStorage() {
@@ -56,8 +71,8 @@ void PERSIST_LoadFromStorage() {
 	PERSIST_remainingParts = EEPROM_CounterReadInt32(EEPROM_COUNTER_OFFSET + EEPROM_COUNTER_REMAINING_PARTS_OFFSET, CONFIG_DEFAULT_REMAINING_PARTS);
 	PERSIST_totalFeeds = EEPROM_CounterCalcTotalFeeds(readTotalFeeds);
 
-	EEPROM_ReadString(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_SHORT_ID_OFFSET, PERSIST_shortPartID, 6);
-	EEPROM_ReadString(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_LONG_ID_OFFSET, PERSIST_longPartID, 127);
+	EEPROM_ReadString(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_SHORT_ID_OFFSET, PERSIST_shortPartID, PERSISt_SHORT_ID_LENGTH);
+	EEPROM_ReadString(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_LONG_ID_OFFSET, PERSIST_longPartID, PERSISt_LONG_ID_LENGTH);
 }
 
 void PERSIST_Setup(I2C_HandleTypeDef *hi2c){
@@ -75,9 +90,9 @@ void PERSIST_Setup(I2C_HandleTypeDef *hi2c){
 }
 
 void PERSIST_SetI2CAddress(uint8_t address) {
-	if (address < 0x10 || address > 0x50) {
+	if (address < PERSIST_MIN_I2C_ADDRESS || address > PERSIST_MAX_I2C_ADDRESS) {
 		ERROR_SetError(ERROR_INVALID_INPUT);
-		address = 0x50;
+		address = PERSIST_INIT_I2C_ADDRESS;
 	}
 	PERSIST_i2cAddress = address;
 }
@@ -171,12 +186,12 @@ void PERSIST_SetShortPartID(char* shortPartID, uint8_t length) {
 		ERROR_SetError(ERROR_INVALID_INPUT);
 		return;
 	}
-	if (length > 6) {
+	if (length > PERSISt_SHORT_ID_LENGTH) {
 		ERROR_SetError(ERROR_INVALID_INPUT);
 		return;
 	}
-	if (length == 6) {
-		if (shortPartID[5] != 0x00) {
+	if (length == PERSISt_SHORT_ID_LENGTH) {
+		if (shortPartID[PERSISt_SHORT_ID_LENGTH - 1] != 0x00) {
 			ERROR_SetError(ERROR_INVALID_INPUT);
 			return;
 		}
@@ -186,12 +201,12 @@ void PERSIST_SetShortPartID(char* shortPartID, uint8_t length) {
 		PERSIST_shortPartID[i] = shortPartID[i];
 		i++;
 	}
-	while (i < 6) {
+	while (i < PERSISt_SHORT_ID_LENGTH) {
 		PERSIST_shortPartID[i] = 0x00;
 		i++;
 	}
 	if (HW_IsV1() == 1) {
-		EEPROM_WriteString(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_SHORT_ID_OFFSET, PERSIST_shortPartID, 6);
+		EEPROM_WriteString(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_SHORT_ID_OFFSET, PERSIST_shortPartID, PERSISt_SHORT_ID_LENGTH);
 	}
 }
 
@@ -200,12 +215,12 @@ void PERSIST_SetLongPartID(char* longPartID, uint8_t length) {
 			ERROR_SetError(ERROR_INVALID_INPUT);
 			return;
 		}
-		if (length > 127) {
+		if (length > PERSISt_LONG_ID_LENGTH) {
 			ERROR_SetError(ERROR_INVALID_INPUT);
 			return;
 		}
-		if (length == 127) {
-			if (longPartID[127] != 0x00) {
+		if (length == PERSISt_LONG_ID_LENGTH) {
+			if (longPartID[PERSISt_LONG_ID_LENGTH - 1] != 0x00) {
 				ERROR_SetError(ERROR_INVALID_INPUT);
 				return;
 			}
@@ -215,12 +230,12 @@ void PERSIST_SetLongPartID(char* longPartID, uint8_t length) {
 			PERSIST_longPartID[i] = longPartID[i];
 			i++;
 		}
-		while (i < 127) {
+		while (i < PERSISt_LONG_ID_LENGTH) {
 			PERSIST_longPartID[i] = 0x00;
 			i++;
 		}
 		if (HW_IsV1() == 1) {
-			EEPROM_WriteString(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_LONG_ID_OFFSET, PERSIST_longPartID, 127);
+			EEPROM_WriteString(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_LONG_ID_OFFSET, PERSIST_longPartID, PERSISt_LONG_ID_LENGTH);
 		}
 }
 

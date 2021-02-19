@@ -1,13 +1,28 @@
 /*
  * com.c
  *
+ * Copyright 2021 SG-O (Joerg Bayer)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
  *  Created on: Jan. 21, 2021
  *      Author: SG-O
  */
 
 #include "com.h"
 
-uint8_t buf[256];
+uint8_t buf[COM_BUFFER_SIZE];
 uint8_t ignore[1];
 uint8_t resultLength = 0;
 uint8_t dir = 0;
@@ -31,7 +46,7 @@ void COM_ParseBuffer() {
 		length = 0;
 		opcode = buf[0];
 		value = buf[1];
-	} else if (buf[0] > 127) {
+	} else if (buf[0] >= OPCODE_NOP) {
 		length = 0;
 		opcode = buf[0];
 		crcL = buf[1];
@@ -46,7 +61,7 @@ void COM_ParseBuffer() {
 
 uint8_t COM_CompareCRC() {
 	if (opcode == OPCODE_READ_LONG || opcode == OPCODE_READ_SHORT) return 1;
-	if (opcode > 127) {
+	if (opcode >= OPCODE_NOP) {
 		uint8_t calc[] = {COM_address, opcode};
 		uint8_t calcL = CRC_Calculate8L(calc, 2);
 		if (calcL == crcL) return 1;
@@ -71,23 +86,23 @@ void COM_PutUnsigned8(uint8_t out) {
 }
 
 void COM_PutUnsigned16(uint16_t out) {
-	CON_Unsigned16ToBytes(out, &buf[resultLength], 2);
-	resultLength += 2;
+	CON_Unsigned16ToBytes(out, &buf[resultLength], CON_SHORT_LENGTH);
+	resultLength += CON_SHORT_LENGTH;
 }
 
 void COM_PutSigned16(int16_t out) {
-	CON_Signed16ToBytes(out, &buf[resultLength], 2);
-	resultLength += 2;
+	CON_Signed16ToBytes(out, &buf[resultLength], CON_SHORT_LENGTH);
+	resultLength += CON_SHORT_LENGTH;
 }
 
 void COM_PutUnsigned32(uint32_t out) {
-	CON_Unsigned32ToBytes(out, &buf[resultLength], 4);
-	resultLength += 4;
+	CON_Unsigned32ToBytes(out, &buf[resultLength], CON_INT_LENGTH);
+	resultLength += CON_INT_LENGTH;
 }
 
 void COM_PutSigned32(int32_t out) {
-	CON_Signed32ToBytes(out, &buf[resultLength], 4);
-	resultLength += 4;
+	CON_Signed32ToBytes(out, &buf[resultLength], CON_INT_LENGTH);
+	resultLength += CON_INT_LENGTH;
 }
 
 void COM_GenerateLongCRC() {
@@ -110,7 +125,7 @@ void COM_GenerateShortCRC() {
 	COM_PutUnsigned8(calcL);
 }
 
-void COM_parseOpcode() {
+void COM_ParseOpcode() {
 	buf[0] = OPCODE_Parse(opcode, length, &buf[2]);
 	resultLength = 1;
 }
@@ -131,7 +146,7 @@ void HAL_I2C_AddrCallback(I2C_HandleTypeDef *hi2c, uint8_t TransferDirection, ui
 	transaction = 0;
 	if( TransferDirection==I2C_DIRECTION_TRANSMIT ) {
 		dir = 0;
-		buf[0] = 128;
+		buf[0] = OPCODE_NOP;
 		HAL_I2C_Slave_Seq_Receive_IT(hi2c, buf, 1, I2C_NEXT_FRAME);
 	} else {
 		dir = 1;
@@ -148,9 +163,9 @@ void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
 	uint8_t rxLength;
 	if (transaction == 0) {
-		if (buf[0] > 252 && buf[0] < 255) {
+		if (buf[0] == OPCODE_READ_SHORT || buf[0] == OPCODE_READ_LONG) {
 			rxLength = 1;
-		} else if (buf[0] > 127) {
+		} else if (buf[0] >= OPCODE_NOP) {
 			rxLength = 1;
 		} else {
 			rxLength = buf[0] + 3;
@@ -169,7 +184,7 @@ void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
 					VALUE_ParseShortRead(value);
 				}
 			} else {
-				COM_parseOpcode();
+				COM_ParseOpcode();
 			}
 		} else {
 			ERROR_SetError(ERROR_CRC);
@@ -177,7 +192,7 @@ void HAL_I2C_SlaveRxCpltCallback(I2C_HandleTypeDef *hi2c)
 			resultLength = 1;
 		}
 		length = 0;
-		opcode = 128;
+		opcode = OPCODE_NOP;
 		HAL_I2C_EnableListen_IT(hi2c);
 	}
 }

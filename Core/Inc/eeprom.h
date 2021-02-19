@@ -1,6 +1,21 @@
 /*
  * eeprom.h
  *
+ * Copyright 2021 SG-O (Joerg Bayer)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ *
  *  Created on: Feb. 15, 2021
  *      Author: SG-O
  */
@@ -70,6 +85,8 @@
 #define EEPROM_COUNTER_WRITES_OFFSET 0x00
 #define EEPROM_COUNTER_TOTAL_FEEDS_OFFSET 0x04
 #define EEPROM_COUNTER_REMAINING_PARTS_OFFSET 0x08
+#define EEPROM_COUNTER_ROW_MASK 0xFFF0
+#define EEPROM_COUNTER_ROW_OFFSET_SHIFT 4
 
 
 #define EEPROM_SPECIAL_OFFSET 0x0F00
@@ -83,6 +100,8 @@
 #define EEPROM_TIMEOUT 50
 #define EEPROM_READ_DELAY 1
 #define EEPROM_WRITE_DELAY 5
+
+#define EEPROM_IO_BUFFER_SIZE 128
 
 I2C_HandleTypeDef *EEPROM_hi2c;
 

@@ -35,6 +35,7 @@ uint32_t holdB;
 uint8_t mode = UI_MODE_HOME;
 
 uint8_t menuEntry = 0;
+uint8_t debugPage = 0;
 
 void UI_ShowBoot() {
 	if ((!HAL_GPIO_ReadPin(Button_A_GPIO_Port, Button_A_Pin)) && (!HAL_GPIO_ReadPin(Button_B_GPIO_Port, Button_B_Pin))) {
@@ -75,7 +76,7 @@ void UI_Process() {
 		DISP_DrawInfo();
 	}
 	if (mode == UI_MODE_DEBUG) {
-		DISP_DrawDebug();
+		DISP_DrawDebug(debugPage);
 		ANALOG_StartConversion();
 	}
 	if (mode == UI_MODE_MENU) {
@@ -126,6 +127,11 @@ void UI_Process() {
 				DRV_Spin(255, 0);
 			} else if (mode == UI_MODE_MENU) {
 				MENU_ChangeEntry(menuEntry, 0);
+			} else if (mode == UI_MODE_DEBUG) {
+				debugPage++;
+				if (debugPage > 1) {
+					debugPage = 0;
+				}
 			}
 
 		}

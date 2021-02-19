@@ -266,7 +266,7 @@ void DISP_DrawBootloader(){
 	u8g2_SendBuffer(&u8g2);
 }
 
-void DISP_DrawDebug(){
+void DISP_DrawDebug(uint8_t page){
 	char snum[DISP_STRING_BUFFER_LENGTH];
 
 	u8g2_ClearBuffer(&u8g2);
@@ -275,30 +275,65 @@ void DISP_DrawDebug(){
 	u8g2_SetFontPosBaseline(&u8g2);
 	u8g2_SetDrawColor(&u8g2, 1);
 	u8g2_DrawBox(&u8g2, 0, 0, 40, 12);
+	u8g2_DrawBox(&u8g2, 0, 62, 40, 10);
 	u8g2_SetDrawColor(&u8g2, 0);
 	u8g2_SetFont(&u8g2, u8g2_font_7x14B_mr);
 	uint8_t offset = DISP_CalculateStringOffset(__STRG_DEBUG, 7);
 	u8g2_DrawStr(&u8g2, offset, 11, __STRG_DEBUG);
+	sprintf(snum, "P%u/%u", page + 1, DISP_DEBUG_PAGES);
+	offset = DISP_CalculateStringOffset(snum, 6);
+	u8g2_SetFont(&u8g2, u8g2_font_t0_11b_mr);
+	u8g2_DrawStr(&u8g2, offset, 71, snum);
+
 	u8g2_SetDrawColor(&u8g2, 1);
 	u8g2_SetFontPosBaseline(&u8g2);
-	u8g2_SetFont(&u8g2, u8g2_font_t0_11b_mr);
-	if (HAL_GPIO_ReadPin(Sensor_A_GPIO_Port, Sensor_A_Pin)) {
-		u8g2_DrawStr(&u8g2, 1, 25, "S_A On");
-	} else {
-		u8g2_DrawStr(&u8g2, 1, 25, "S_A Off");
+	switch (page) {
+	case 0:
+		if (HW_IsV1() == 1) {
+			if (HAL_GPIO_ReadPin(V1_Sensor_A_GPIO_Port, V1_Sensor_A_Pin)) {
+				u8g2_DrawStr(&u8g2, 1, 25, "S_A On");
+			} else {
+				u8g2_DrawStr(&u8g2, 1, 25, "S_A Off");
+			}
+			if (HAL_GPIO_ReadPin(V1_Sensor_B_GPIO_Port, V1_Sensor_B_Pin)) {
+				u8g2_DrawStr(&u8g2, 1, 36, "S_B On");
+			} else {
+				u8g2_DrawStr(&u8g2, 1, 36, "S_B Off");
+			}
+			if (HAL_GPIO_ReadPin(V1_Sensor_C_GPIO_Port, V1_Sensor_C_Pin)) {
+				u8g2_DrawStr(&u8g2, 1, 47, "S_C On");
+			} else {
+				u8g2_DrawStr(&u8g2, 1, 47, "S_C Off");
+			}
+			if (HAL_GPIO_ReadPin(V1_Sensor_D_GPIO_Port, V1_Sensor_D_Pin)) {
+				u8g2_DrawStr(&u8g2, 1, 58, "S_D On");
+			} else {
+				u8g2_DrawStr(&u8g2, 1, 58, "S_D Off");
+			}
+		} else {
+			if (HAL_GPIO_ReadPin(Sensor_A_GPIO_Port, Sensor_A_Pin)) {
+				u8g2_DrawStr(&u8g2, 1, 25, "S_A On");
+			} else {
+				u8g2_DrawStr(&u8g2, 1, 25, "S_A Off");
+			}
+			if (HAL_GPIO_ReadPin(Sensor_B_GPIO_Port, Sensor_B_Pin)) {
+				u8g2_DrawStr(&u8g2, 1, 36, "S_B On");
+			} else {
+				u8g2_DrawStr(&u8g2, 1, 36, "S_B Off");
+			}
+		}
+		break;
+	case 1:
+		sprintf(snum, "%lumA", ANALOG_GetmaMotor());
+		u8g2_DrawStr(&u8g2, 1, 25, snum);
+		sprintf(snum, "%lumV", ANALOG_GetVRef());
+		u8g2_DrawStr(&u8g2, 1, 36, snum);
+		sprintf(snum, "%lumV", ANALOG_GetVID());
+		u8g2_DrawStr(&u8g2, 1, 47, snum);
+		break;
+	default:
+		break;
 	}
-	if (HAL_GPIO_ReadPin(Sensor_B_GPIO_Port, Sensor_B_Pin)) {
-		u8g2_DrawStr(&u8g2, 1, 36, "S_B On");
-	} else {
-		u8g2_DrawStr(&u8g2, 1, 36, "S_B Off");
-	}
-
-	sprintf(snum, "%lumA", ANALOG_GetmaMotor());
-	u8g2_DrawStr(&u8g2, 1, 47, snum);
-	sprintf(snum, "%lumV", ANALOG_GetVRef());
-	u8g2_DrawStr(&u8g2, 1, 58, snum);
-	sprintf(snum, "%lumV", ANALOG_GetVID());
-	u8g2_DrawStr(&u8g2, 1, 69, snum);
 	u8g2_SendBuffer(&u8g2);
 }
 

@@ -38,11 +38,13 @@
 #define DISP_TX_TIMEOUT 10
 #define DISP_STRING_BUFFER_LENGTH 16
 
+#define DISP_DEBUG_PAGES 2
+
 u8g2_t u8g2;
 I2C_HandleTypeDef *DISP_hi2c;
 
 void DISP_Setup(I2C_HandleTypeDef *hi2c);
-void DISP_DrawDebug(void);
+void DISP_DrawDebug(uint8_t page);
 void DISP_DrawInfo(void);
 void DISP_DrawError(void);
 void DISP_DrawBoot(void);

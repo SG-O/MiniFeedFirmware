@@ -176,7 +176,7 @@
 
    END OF TERMS AND CONDITIONS
 
-   Copyright 2013-2018 Docker, Inc.
+   Copyright 2021 SG-O (Joerg Bayer)
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -189,3 +189,14 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+   
+   This product bundles Ascii85 Jun 24, 2020 by Doug Currie, which is 
+   available under a "MIT" license. For details, see ./Core/Src/ascii85.c.
+   
+   This product bundles STM32CubeG0 HAL Driver MCU Component V1.4.0, which 
+   is available under a "3-clause BSD" license. For details, see 
+   ./Core/Src/stm32g0xx_hal_msp.c.
+   
+   This product bundles U8g2: Library Dec 28, 2020, which is available 
+   under a "2-clause BSD" license. For details, see 
+   ./Lib/u8g2/LICENSE.

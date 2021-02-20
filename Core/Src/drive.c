@@ -126,6 +126,75 @@ void DRV_Feed(uint8_t uiCaused) {
 	HAL_TIM_Base_Start_IT(DRV_delay);
 }
 
+void DRV_Allign() {
+	uint8_t allignment = PERSIST_GetPartPitch();
+	if (allignment > 4) allignment = 4;
+	if (allignment < HW_GetMinFeed()) {
+		ERROR_SetError(ERROR_CONFIG_ERROR);
+		return;
+	}
+	allignment = allignment / HW_GetMinFeed();
+	if (allignment == 0) allignment = 1;
+	uint8_t speed = PERSIST_GetFeedSpeed();
+	if (speed < 1) {
+		ERROR_SetError(ERROR_CONFIG_ERROR);
+		return;
+	}
+	if (STATUS_GetStatus() != STATUS_READY) {
+		return;
+	}
+	STATUS_SetBusy();
+	DRV_Spin(speed, 1);
+	DRV_speed = speed;
+	uint8_t target = 0;
+	if (HW_IsV1() == 1) {
+		GPIO_PinState sA = HAL_GPIO_ReadPin(V1_Sensor_A_GPIO_Port, V1_Sensor_A_Pin);
+		GPIO_PinState sD = HAL_GPIO_ReadPin(V1_Sensor_D_GPIO_Port, V1_Sensor_D_Pin);
+		target = 1;
+		if (!sA && !sD) {
+			DRV_pol = 0;
+			if (allignment == 2) target++;
+			if (allignment > 2) target += 3;
+		} else if (!sA && sD) {
+			DRV_pol = 1;
+			if (allignment > 2) target += 2;
+		} else if (sA && sD) {
+			DRV_pol = 2;
+			if (allignment > 1) target ++;
+		} else {
+			DRV_pol = 3;
+		}
+		target += 4 - ((DRV_pol + 1)% allignment);
+	} else {
+		target = 1;
+		if (HAL_GPIO_ReadPin(Sensor_A_GPIO_Port, Sensor_A_Pin)) {
+			DRV_pol = 1;
+		} else {
+			DRV_pol = 0;
+			if (allignment > 1) target++;
+		}
+	}
+	DRV_count = target;
+	if (speed < 128) return;
+	if (DRV_count > 1) return;
+	uint16_t slowdown = PERSIST_GetMotorSlowDelay();
+	if (slowdown < 1) return;
+	HAL_TIM_Base_Stop_IT(DRV_delay);
+	int i = 0;
+	while (HAL_TIM_Base_GetState(DRV_delay) != HAL_TIM_STATE_READY) {
+		HAL_Delay(1);
+		i++;
+		if(i > 20) {
+			DRV_speed = DRV_speed >> 1;
+			DRV_Spin(DRV_speed, 1);
+			return;
+		}
+	}
+	DRV_delay->Instance->ARR = (uint32_t)slowdown;
+	HAL_TIM_Base_Start_IT(DRV_delay);
+
+}
+
 void DRV_ProcessSensorV0(){
 	if (DRV_count < 1) {
 		if (STATUS_GetStatus() != STATUS_BUSY) return;

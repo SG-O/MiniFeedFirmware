@@ -42,6 +42,7 @@ void PERSIST_LoadDefaults() {
 	PERSIST_i2cAddress = PERSIST_INIT_I2C_ADDRESS;
 
 	PERSIST_partPitch = CONFIG_DEFAULT_PART_PITCH;
+	if (PERSIST_partPitch < HW_GetMinFeed()) PERSIST_partPitch = HW_GetMinFeed();
 	PERSIST_feedSpeed = CONFIG_DEFAULT_FEED_SPEED;
 	PERSIST_displayBrightness = CONFIG_DEFAULT_DISPLAY_BRIGHTNESS;
 	PERSIST_motorDir = CONFIG_DEFAULT_MOTOR_DIRECTION;
@@ -60,6 +61,7 @@ void PERSIST_LoadDefaults() {
 
 void PERSIST_LoadFromStorage() {
 	PERSIST_partPitch = EEPROM_ReadUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_PART_PITCH_OFFSET, CONFIG_DEFAULT_PART_PITCH);
+	if (PERSIST_partPitch < HW_GetMinFeed()) PERSIST_partPitch = HW_GetMinFeed();
 	PERSIST_feedSpeed = EEPROM_ReadUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_FEED_SPEED_OFFSET, CONFIG_DEFAULT_FEED_SPEED);
 	PERSIST_displayBrightness = EEPROM_ReadUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_DISPLAY_BRIGHTNESS_OFFSET, CONFIG_DEFAULT_DISPLAY_BRIGHTNESS);
 	PERSIST_motorDir = EEPROM_ReadUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_MOTOR_DIRECTION_OFFSET, CONFIG_DEFAULT_MOTOR_DIRECTION);
@@ -98,9 +100,9 @@ void PERSIST_SetI2CAddress(uint8_t address) {
 }
 
 void PERSIST_SetPartPitch(uint8_t partPitch) {
-	if (partPitch < 1) {
+	if (partPitch < HW_GetMinFeed()) {
 			ERROR_SetError(ERROR_INVALID_INPUT);
-			partPitch = 1;
+			partPitch = HW_GetMinFeed();
 		}
 	PERSIST_partPitch = partPitch;
 	if (HW_IsV1() == 1) {

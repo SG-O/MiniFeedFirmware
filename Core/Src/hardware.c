@@ -61,6 +61,13 @@ uint8_t HW_IsV1() {
 	return HW_beta;
 }
 
+uint8_t HW_GetMinFeed() {
+	if (HW_beta == 1) {
+		return HW_MIN_FEED_2;
+	}
+	return HW_MIN_FEED_4;
+}
+
 uint64_t HW_GetFirmwareVersion() {
 	uint64_t value = VERSION_MAJOR & 0xFFFF;
 	value = value << CON_SHORT_SHIFT;

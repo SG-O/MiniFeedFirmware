@@ -75,6 +75,8 @@ void MENU_DrawPage(uint8_t page) {
 		u8g2_DrawHLine(MENU_u8g2, 0, 41, 40);
 		u8g2_DrawStr(MENU_u8g2, 2, 55, __STRG_EXIT);
 		break;
+	default:
+		break;
 	}
 }
 
@@ -119,15 +121,18 @@ void MENU_ChangeEntry(uint8_t entry, uint8_t direction) {
 					PERSIST_SetPartPitch(pitch);
 				}
 			} else {
+				uint8_t newPitch = 0;
 				if (PERSIST_GetPartPitch() < 3) {
-					PERSIST_SetPartPitch(1);
+					newPitch = HW_GetMinFeed();
 				} else if (PERSIST_GetPartPitch() < 7) {
-					PERSIST_SetPartPitch(2);
+					newPitch = 2;
 				} else {
 					uint8_t pitch = PERSIST_GetPartPitch() - 4;
 					pitch -= pitch % 4;
-					PERSIST_SetPartPitch(pitch);
+					newPitch = pitch;
 				}
+				if (newPitch < HW_GetMinFeed()) newPitch = HW_GetMinFeed();
+				PERSIST_SetPartPitch(newPitch);
 			}
 			break;
 		case MENU_ENTRY_ADDRESS:
@@ -159,6 +164,8 @@ void MENU_ChangeEntry(uint8_t entry, uint8_t direction) {
 			break;
 		case MENU_ENTRY_EXIT:
 			UI_GoHome();
+			break;
+		default:
 			break;
 	}
 }

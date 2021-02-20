@@ -119,12 +119,22 @@ void UI_Process() {
 		}
 	}
 	if (!HAL_GPIO_ReadPin(Button_A_GPIO_Port, Button_A_Pin)) {
+		if (oldButtonA == 0) {
+			if (mode == UI_MODE_HOME) {
+				if (STATUS_GetStatus() == STATUS_READY) {
+					DRV_Spin(255, 0);
+				}
+			}
+		}
 		oldButtonA = 1;
 	} else {
 		if (oldButtonA == 1) {
 			oldButtonA = 0;
 			if (mode == UI_MODE_HOME) {
-				DRV_Spin(255, 0);
+				if (STATUS_GetStatus() == STATUS_READY) {
+					DRV_Spin(0, 0);
+					DRV_Allign();
+				}
 			} else if (mode == UI_MODE_MENU) {
 				MENU_ChangeEntry(menuEntry, 0);
 			} else if (mode == UI_MODE_DEBUG) {
@@ -137,12 +147,22 @@ void UI_Process() {
 		}
 	}
 	if (!HAL_GPIO_ReadPin(Button_C_GPIO_Port, Button_C_Pin)) {
+		if (oldButtonC == 0) {
+			if (mode == UI_MODE_HOME) {
+				if (STATUS_GetStatus() == STATUS_READY) {
+					DRV_Spin(127, 1);
+				}
+			}
+		}
 		oldButtonC = 1;
 	} else {
 		if (oldButtonC == 1) {
 			oldButtonC = 0;
 			if (mode == UI_MODE_HOME) {
-				DRV_Spin(127, 1);
+				if (STATUS_GetStatus() == STATUS_READY) {
+					DRV_Spin(0, 0);
+					DRV_Allign();
+				}
 			} else if (mode == UI_MODE_MENU) {
 				MENU_ChangeEntry(menuEntry, 1);
 			} else if (mode == UI_MODE_DEBUG) {

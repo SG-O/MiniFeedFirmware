@@ -28,11 +28,16 @@
 #include "display.h"
 #include "backup.h"
 
+#define HW_MIN_FEED_4 4
+#define HW_MIN_FEED_2 2
+#define HW_MIN_FEED_1 1
+
 uint8_t HW_version;
 uint8_t HW_beta;
 
 void HW_Setup(void);
 uint8_t HW_IsV1(void);
+uint8_t HW_GetMinFeed(void);
 uint64_t HW_GetFirmwareVersion(void);
 uint64_t HW_GetHardwareVersion(void);
 void HW_StartBootloader(void);

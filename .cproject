@@ -6,7 +6,7 @@
 				<macros>
 					<stringMacro name="version_minor" type="VALUE_TEXT" value="1"/>
 					<stringMacro name="version_major" type="VALUE_TEXT" value="0"/>
-					<stringMacro name="version_patch" type="VALUE_TEXT" value="11"/>
+					<stringMacro name="version_patch" type="VALUE_TEXT" value="12"/>
 					<stringMacro name="version_description" type="VALUE_TEXT" value="DEBUG"/>
 				</macros>
 				<externalSettings/>
@@ -95,7 +95,7 @@
 				<macros>
 					<stringMacro name="version_minor" type="VALUE_TEXT" value="1"/>
 					<stringMacro name="version_major" type="VALUE_TEXT" value="0"/>
-					<stringMacro name="version_patch" type="VALUE_TEXT" value="11"/>
+					<stringMacro name="version_patch" type="VALUE_TEXT" value="12"/>
 					<stringMacro name="version_description" type="VALUE_TEXT" value="Alpha"/>
 				</macros>
 				<externalSettings/>

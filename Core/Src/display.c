@@ -243,8 +243,13 @@ void DISP_DrawError(){
 	u8g2_SetFontPosCenter(&u8g2);
 
 	sprintf(snum, "%u", ERROR_GetError());
-	u8g2_SetFont(&u8g2, u8g2_font_inr24_mn);
-	offset = DISP_CalculateStringOffset(snum, 20);
+	if (ERROR_GetError() > 99) {
+		u8g2_SetFont(&u8g2, u8g2_font_10x20_mn);
+		offset = DISP_CalculateStringOffset(snum,10);
+	} else {
+		u8g2_SetFont(&u8g2, u8g2_font_inr24_mn);
+		offset = DISP_CalculateStringOffset(snum, 20);
+	}
 	u8g2_DrawStr(&u8g2, offset, 45, snum);
 	if (HAL_GetTick() > lastBlink + 500) {
 		HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);

@@ -45,6 +45,25 @@
 #define ERROR_CRC 13
 #define ERROR_BUSY 14
 
+#ifdef DEBUG
+#define ERROR_DEBUG_0 128
+#define ERROR_DEBUG_1 129
+#define ERROR_DEBUG_2 130
+#define ERROR_DEBUG_3 131
+#define ERROR_DEBUG_4 132
+#define ERROR_DEBUG_5 133
+#define ERROR_DEBUG_6 134
+#define ERROR_DEBUG_7 135
+#define ERROR_DEBUG_8 136
+#define ERROR_DEBUG_9 137
+#define ERROR_DEBUG_10 138
+#define ERROR_DEBUG_11 139
+#define ERROR_DEBUG_12 140
+#define ERROR_DEBUG_13 141
+#define ERROR_DEBUG_14 142
+#define ERROR_DEBUG_15 143
+#endif
+
 uint8_t STATUS_GetStatus(void);
 uint8_t ERROR_GetError(void);
 void ERROR_SetError(uint8_t errorCode);

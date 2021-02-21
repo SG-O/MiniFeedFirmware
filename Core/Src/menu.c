@@ -105,8 +105,8 @@ void MENU_ChangeEntry(uint8_t entry, uint8_t direction) {
 			break;
 		case MENU_ENTRY_PITCH:
 			if (direction == 1) {
-				if (PERSIST_GetPartPitch() > 247) {
-					PERSIST_SetPartPitch(252);
+				if (PERSIST_GetPartPitch() > 68) {
+					PERSIST_SetPartPitch(72);
 				} else {
 					uint8_t pitch = PERSIST_GetPartPitch();
 					if (pitch < 2) {

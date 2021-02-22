@@ -148,43 +148,64 @@ int8_t EEPROM_ReadInt8(uint16_t address, int8_t def) {
 //--Writes--
 uint16_t EEPROM_WriteString(uint16_t address, char *strg, uint16_t length) {
 	memcpy(EEPROM_buffer, strg, length);
-	if (EEPROM_Write(address, length) != length) return 0;
+	if (EEPROM_Write(address, length) != length) {
+		ERROR_SetError(ERROR_STORAGE_WRITE);
+		return 0;
+	}
 	return length;
 }
 
 uint16_t EEPROM_WriteUint32(uint16_t address, uint32_t data) {
 	memcpy(EEPROM_buffer, &data, CON_INT_LENGTH);
-	if (EEPROM_Write(address, CON_INT_LENGTH) != CON_INT_LENGTH) return 0;
+	if (EEPROM_Write(address, CON_INT_LENGTH) != CON_INT_LENGTH) {
+		ERROR_SetError(ERROR_STORAGE_WRITE);
+		return 0;
+	}
 	return CON_INT_LENGTH;
 }
 
 uint16_t EEPROM_WriteInt32(uint16_t address, int32_t data) {
 	memcpy(EEPROM_buffer, &data, CON_INT_LENGTH);
-	if (EEPROM_Write(address, CON_INT_LENGTH) != CON_INT_LENGTH) return 0;
+	if (EEPROM_Write(address, CON_INT_LENGTH) != CON_INT_LENGTH) {
+		ERROR_SetError(ERROR_STORAGE_WRITE);
+		return 0;
+	}
 	return CON_INT_LENGTH;
 }
 
 uint16_t EEPROM_WriteUint16(uint16_t address, uint16_t data) {
 	memcpy(EEPROM_buffer, &data, CON_SHORT_LENGTH);
-	if (EEPROM_Write(address, CON_SHORT_LENGTH) != CON_SHORT_LENGTH) return 0;
+	if (EEPROM_Write(address, CON_SHORT_LENGTH) != CON_SHORT_LENGTH) {
+		ERROR_SetError(ERROR_STORAGE_WRITE);
+		return 0;
+	}
 	return CON_SHORT_LENGTH;
 }
 
 uint16_t EEPROM_WriteInt16(uint16_t address, int16_t data) {
 	memcpy(EEPROM_buffer, &data, CON_SHORT_LENGTH);
-	if (EEPROM_Write(address, CON_SHORT_LENGTH) != CON_SHORT_LENGTH) return 0;
+	if (EEPROM_Write(address, CON_SHORT_LENGTH) != CON_SHORT_LENGTH) {
+		ERROR_SetError(ERROR_STORAGE_WRITE);
+		return 0;
+	}
 	return CON_SHORT_LENGTH;
 }
 
 uint16_t EEPROM_WriteUint8(uint16_t address, uint8_t data) {
 	memcpy(EEPROM_buffer, &data, CON_BYTE_LENGTH);
-	if (EEPROM_Write(address, CON_BYTE_LENGTH) != CON_BYTE_LENGTH) return 0;
+	if (EEPROM_Write(address, CON_BYTE_LENGTH) != CON_BYTE_LENGTH) {
+		ERROR_SetError(ERROR_STORAGE_WRITE);
+		return 0;
+	}
 	return CON_BYTE_LENGTH;
 }
 
 uint16_t EEPROM_WriteInt8(uint16_t address, int8_t data) {
 	memcpy(EEPROM_buffer, &data, 1);
-	if (EEPROM_Write(address, 1) != 1) return 0;
+	if (EEPROM_Write(address, 1) != 1) {
+		ERROR_SetError(ERROR_STORAGE_WRITE);
+		return 0;
+	}
 	return CON_BYTE_LENGTH;
 }
 
@@ -199,6 +220,7 @@ void EEPROM_UpdateCounterSlot() {
 		}
 		EEPROM_previousTotalFeeds += EEPROM_ReadUint32(EEPROM_COUNTER_OFFSET + (i << EEPROM_COUNTER_ROW_OFFSET_SHIFT) + EEPROM_COUNTER_TOTAL_FEEDS_OFFSET, 0);
 	}
+	ERROR_SetError(ERROR_STORAGE_COUNTER_COUNT);
 	EEPROM_counterSlot = EEPROM_COUNTER_SLOTS;
 }
 
@@ -279,6 +301,7 @@ uint8_t EEPROM_WriteHeader() {
 		return EEPROM_initialized;
 	}
 	EEPROM_initialized = 0;
+	ERROR_SetError(ERROR_STORAGE_INIT);
 	return EEPROM_initialized;
 }
 
@@ -287,14 +310,20 @@ uint8_t EEPROM_WriteDefaults() {
 		EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_PART_PITCH_OFFSET, CONFIG_DEFAULT_PART_PITCH);
 		EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_FEED_SPEED_OFFSET, CONFIG_DEFAULT_FEED_SPEED);
 		EEPROM_WriteUint16(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_LOW_PARTS_WARNING_OFFSET, CONFIG_DEFAULT_LOW_PARTS_WARN);
+	} else {
+		ERROR_SetError(ERROR_STORAGE_CONFIG_COUNT);
 	}
 	if (EEPROM_CheckUpdateRowCounter(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_ROW_WRITE_1_OFFSET) < EEPROM_MAXIMUM_WRITES) {
 		EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_DISPLAY_BRIGHTNESS_OFFSET, CONFIG_DEFAULT_DISPLAY_BRIGHTNESS);
 		EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_MOTOR_DIRECTION_OFFSET, CONFIG_DEFAULT_MOTOR_DIRECTION);
 		EEPROM_WriteUint16(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_MOTOR_SLOWDOWN_DELAY_OFFSET, CONFIG_DEFAULT_MOTOR_SLOWDOWN_DELAY);
+	} else {
+		ERROR_SetError(ERROR_STORAGE_CONFIG_COUNT);
 	}
 	if (EEPROM_CheckUpdateRowCounter(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_ROW_WRITE_2_OFFSET) < EEPROM_MAXIMUM_WRITES) {
 		EEPROM_WriteInt32(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_TOTAL_PARTS_OFFSET, CONFIG_DEFAULT_TOTAL_PARTS);
+	} else {
+		ERROR_SetError(ERROR_STORAGE_CONFIG_COUNT);
 	}
 	EEPROM_UpdateCounterSlot();
 	EEPROM_CounterWriteUint32(EEPROM_COUNTER_OFFSET + EEPROM_COUNTER_TOTAL_FEEDS_OFFSET, 0);
@@ -311,6 +340,8 @@ uint8_t EEPROM_WriteDefaults() {
 		EEPROM_WriteString(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_SHORT_ID_OFFSET, id, EEPROM_CONFIG_SHORT_ID_LENGTH);
 		EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_SHORT_ID_FILLER_0_OFFSET, 0);
 		EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_SHORT_ID_FILLER_1_OFFSET, 0);
+	} else {
+		ERROR_SetError(ERROR_STORAGE_CONFIG_COUNT);
 	}
 	if (EEPROM_CheckUpdateRowCounter(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_LONG_ID_WRITES_OFFSET) < EEPROM_MAXIMUM_WRITES) {
 		for (int i = 0; i < EEPROM_CONFIG_LONG_ID_LENGTH; i++) {
@@ -319,6 +350,8 @@ uint8_t EEPROM_WriteDefaults() {
 		}
 		EEPROM_Write(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_LONG_ID_OFFSET, EEPROM_CONFIG_LONG_ID_LENGTH);
 		EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_LONG_ID_FILLER_OFFSET, 0);
+	} else {
+		ERROR_SetError(ERROR_STORAGE_CONFIG_COUNT);
 	}
 	return EEPROM_initialized;
 }
@@ -335,28 +368,33 @@ uint8_t EEPROM_CheckHeader() {
 		return EEPROM_WriteDefaults();
 	} else if (version != EEPROM_FORMAT_VERSION) {
 		EEPROM_initialized = 0;
+		ERROR_SetError(ERROR_STORAGE_HEADER);
 		return EEPROM_initialized;
 	}
 	uint32_t crc;
 	memcpy(&crc, &EEPROM_buffer[EEPROM_HEADER_CRC_OFFSET], CON_INT_LENGTH);
 	if (CRC_Calculate32(EEPROM_buffer, EEPROM_HEADER_CRC_OFFSET) != crc) {
 		EEPROM_initialized = 0;
+		ERROR_SetError(ERROR_STORAGE_HEADER);
 		return EEPROM_initialized;
 	}
 	uint32_t id;
 	memcpy(&id, &EEPROM_buffer[EEPROM_HEADER_DEVICE_ID_0_OFFSET], CON_INT_LENGTH);
 	if (id != HAL_GetUIDw0()) {
 		EEPROM_initialized = 0;
+		ERROR_SetError(ERROR_STORAGE_HEADER);
 		return EEPROM_initialized;
 	}
 	memcpy(&id, &EEPROM_buffer[EEPROM_HEADER_DEVICE_ID_1_OFFSET], CON_INT_LENGTH);
 	if (id != HAL_GetUIDw1()) {
 		EEPROM_initialized = 0;
+		ERROR_SetError(ERROR_STORAGE_HEADER);
 		return EEPROM_initialized;
 	}
 	memcpy(&id, &EEPROM_buffer[EEPROM_HEADER_DEVICE_ID_2_OFFSET], CON_INT_LENGTH);
 	if (id != HAL_GetUIDw2()) {
 		EEPROM_initialized = 0;
+		ERROR_SetError(ERROR_STORAGE_HEADER);
 		return EEPROM_initialized;
 	}
 	EEPROM_initialized = 1;

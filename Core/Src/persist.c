@@ -85,8 +85,6 @@ void PERSIST_Setup(I2C_HandleTypeDef *hi2c){
 		uint8_t eepromOk = EEPROM_CheckHeader();
 		if (eepromOk == 1) {
 			PERSIST_LoadFromStorage();
-		} else {
-			ERROR_SetError(ERROR_INITIALISATION_FAILED);
 		}
 	}
 }
@@ -108,6 +106,8 @@ void PERSIST_SetPartPitch(uint8_t partPitch) {
 	if (HW_IsV1() == 1) {
 		if (EEPROM_CheckUpdateRowCounter(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_ROW_WRITE_0_OFFSET) < EEPROM_MAXIMUM_WRITES) {
 			EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_PART_PITCH_OFFSET, partPitch);
+		} else {
+			ERROR_SetError(ERROR_STORAGE_CONFIG_COUNT);
 		}
 	}
 }
@@ -121,6 +121,8 @@ void PERSIST_SetFeedSpeed(uint8_t feedSpeed) {
 	if (HW_IsV1() == 1) {
 		if (EEPROM_CheckUpdateRowCounter(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_ROW_WRITE_0_OFFSET) < EEPROM_MAXIMUM_WRITES) {
 			EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_FEED_SPEED_OFFSET, feedSpeed);
+		} else {
+			ERROR_SetError(ERROR_STORAGE_CONFIG_COUNT);
 		}
 	}
 }
@@ -134,6 +136,8 @@ void PERSIST_SetDisplayBrightness(uint8_t displayBrightness) {
 	if (HW_IsV1() == 1) {
 		if (EEPROM_CheckUpdateRowCounter(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_ROW_WRITE_1_OFFSET) < EEPROM_MAXIMUM_WRITES) {
 			EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_DISPLAY_BRIGHTNESS_OFFSET, displayBrightness);
+		} else {
+			ERROR_SetError(ERROR_STORAGE_CONFIG_COUNT);
 		}
 	}
 }
@@ -147,6 +151,8 @@ void PERSIST_SetMotorDir(uint8_t motorDir) {
 	if (HW_IsV1() == 1) {
 		if (EEPROM_CheckUpdateRowCounter(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_ROW_WRITE_1_OFFSET) < EEPROM_MAXIMUM_WRITES) {
 			EEPROM_WriteUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_MOTOR_DIRECTION_OFFSET, motorDir);
+		} else {
+			ERROR_SetError(ERROR_STORAGE_CONFIG_COUNT);
 		}
 	}
 }
@@ -156,6 +162,8 @@ void PERSIST_SetMotorSlowDelay(uint16_t motorSlowDelay) {
 	if (HW_IsV1() == 1) {
 		if (EEPROM_CheckUpdateRowCounter(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_ROW_WRITE_1_OFFSET) < EEPROM_MAXIMUM_WRITES) {
 			EEPROM_WriteUint16(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_MOTOR_SLOWDOWN_DELAY_OFFSET, motorSlowDelay);
+		} else {
+			ERROR_SetError(ERROR_STORAGE_CONFIG_COUNT);
 		}
 	}
 }
@@ -165,6 +173,8 @@ void PERSIST_SetTotalParts(int32_t totalParts) {
 	if (HW_IsV1() == 1) {
 		if (EEPROM_CheckUpdateRowCounter(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_ROW_WRITE_2_OFFSET) < EEPROM_MAXIMUM_WRITES) {
 			EEPROM_WriteInt32(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_TOTAL_PARTS_OFFSET, totalParts);
+		} else {
+			ERROR_SetError(ERROR_STORAGE_CONFIG_COUNT);
 		}
 	}
 }
@@ -180,6 +190,8 @@ void PERSIST_SetLowPartWarn(uint16_t lowPartWarn) {
 	PERSIST_lowPartWarn = lowPartWarn;
 	if (EEPROM_CheckUpdateRowCounter(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_ROW_WRITE_0_OFFSET) < EEPROM_MAXIMUM_WRITES) {
 		EEPROM_WriteUint16(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_LOW_PARTS_WARNING_OFFSET, lowPartWarn);
+	} else {
+		ERROR_SetError(ERROR_STORAGE_CONFIG_COUNT);
 	}
 }
 
@@ -209,6 +221,8 @@ void PERSIST_SetShortPartID(char* shortPartID, uint8_t length) {
 	}
 	if (HW_IsV1() == 1) {
 		EEPROM_WriteString(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_SHORT_ID_OFFSET, PERSIST_shortPartID, PERSISt_SHORT_ID_LENGTH);
+	} else {
+		ERROR_SetError(ERROR_STORAGE_CONFIG_COUNT);
 	}
 }
 
@@ -238,6 +252,8 @@ void PERSIST_SetLongPartID(char* longPartID, uint8_t length) {
 		}
 		if (HW_IsV1() == 1) {
 			EEPROM_WriteString(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_LONG_ID_OFFSET, PERSIST_longPartID, PERSISt_LONG_ID_LENGTH);
+		} else {
+			ERROR_SetError(ERROR_STORAGE_CONFIG_COUNT);
 		}
 }
 

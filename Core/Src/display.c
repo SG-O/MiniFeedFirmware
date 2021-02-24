@@ -71,7 +71,7 @@ uint8_t DISP_U8x8_byte_stm32hal_hw_i2c(u8x8_t *u8x8, uint8_t msg, uint8_t arg_in
 	static uint8_t buffer[DISP_TX_BUFFER_LENGTH];		/* u8g2/u8x8 will never send more than 32 bytes between START_TRANSFER and END_TRANSFER */
 	static uint8_t buf_idx;
 	uint8_t *data;
-
+	uint32_t tick = HAL_GetTick() + 5;
 
   switch(msg)
   {
@@ -99,6 +99,7 @@ uint8_t DISP_U8x8_byte_stm32hal_hw_i2c(u8x8_t *u8x8, uint8_t msg, uint8_t arg_in
 		while (HAL_I2C_GetState(DISP_hi2c) != HAL_I2C_STATE_READY)
 		{
 			asm("NOP");
+			if (tick > HAL_GetTick()) return 0;
 		}
 		HAL_I2C_Master_Transmit(DISP_hi2c, (uint16_t)I2C_ADDRESS<<1, &buffer[0], buf_idx, DISP_TX_TIMEOUT);
     	break;

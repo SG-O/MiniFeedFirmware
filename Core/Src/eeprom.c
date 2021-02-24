@@ -60,6 +60,10 @@ uint16_t EEPROM_Read(uint16_t address, uint16_t length) {
 	uint16_t leftInPage; // A page is EEPROM_PAGE_SIZE long. Reading outside the page boundary is not strictly illegal. This is just to be cautious.
 	uint16_t read = 0; // Total bytes read.
 	HAL_StatusTypeDef result;
+	while (HAL_I2C_GetState(EEPROM_hi2c) != HAL_I2C_STATE_READY)
+	{
+		asm("NOP");
+	}
 	while (length > 0) {
 		leftInPage = EEPROM_PAGE_SIZE - (address % EEPROM_PAGE_SIZE); // Calculate the number of bytes until the end of the page
 		if (length < leftInPage) {
@@ -80,6 +84,10 @@ uint16_t EEPROM_Write(uint16_t address, uint16_t length) {
 	if (EEPROM_initialized != 1) return 0;
 	uint16_t leftInPage; // A page is EEPROM_PAGE_SIZE long. Writing outside the page boundary is not permitted.
 	uint16_t written = 0; // Total bytes written.
+	while (HAL_I2C_GetState(EEPROM_hi2c) != HAL_I2C_STATE_READY)
+	{
+		asm("NOP");
+	}
 	HAL_StatusTypeDef result;
 	while (length > 0) {
 		leftInPage = EEPROM_PAGE_SIZE - (address % EEPROM_PAGE_SIZE); // Calculate the number of bytes until the end of the page

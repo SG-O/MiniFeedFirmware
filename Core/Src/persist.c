@@ -50,16 +50,33 @@ void PERSIST_LoadDefaults() {
 	PERSIST_totalParts = CONFIG_DEFAULT_TOTAL_PARTS;
 	PERSIST_remainingParts = CONFIG_DEFAULT_REMAINING_PARTS;
 	PERSIST_lowPartWarn = CONFIG_DEFAULT_LOW_PARTS_WARN;
-	PERSIST_SetLongPartID(CONFIG_DEFAULT_LONG_PARTS_ID, sizeof(CONFIG_DEFAULT_LONG_PARTS_ID));
 	char id[PERSISt_SHORT_ID_LENGTH];
 	uint32_t devID = HAL_GetUIDw0() ^ HAL_GetUIDw1() ^ HAL_GetUIDw2();
 	uint8_t devIDByte[CON_INT_LENGTH];
 	*(uint32_t*)&devIDByte = devID;
 	encode_ascii85(devIDByte, CON_INT_LENGTH, id, PERSISt_SHORT_ID_LENGTH);
-	PERSIST_SetShortPartID(id, PERSISt_SHORT_ID_LENGTH - 1);
+	int i = 0;
+	while (i < PERSISt_SHORT_ID_LENGTH - 1) {
+		PERSIST_shortPartID[i] = id[i];
+		i++;
+	}
+	while (i < PERSISt_SHORT_ID_LENGTH) {
+		PERSIST_shortPartID[i] = 0x00;
+		i++;
+	}
+	i = 0;
+	while (i < sizeof(CONFIG_DEFAULT_LONG_PARTS_ID)) {
+		PERSIST_longPartID[i] = CONFIG_DEFAULT_LONG_PARTS_ID[i];
+		i++;
+	}
+	while (i < PERSISt_LONG_ID_LENGTH) {
+		PERSIST_longPartID[i] = 0x00;
+		i++;
+	}
 }
 
 void PERSIST_LoadFromStorage() {
+	PERSIST_i2cAddress = PERSIST_INIT_I2C_ADDRESS;
 	PERSIST_partPitch = EEPROM_ReadUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_PART_PITCH_OFFSET, CONFIG_DEFAULT_PART_PITCH);
 	if (PERSIST_partPitch < HW_GetMinFeed()) PERSIST_partPitch = HW_GetMinFeed();
 	PERSIST_feedSpeed = EEPROM_ReadUint8(EEPROM_CONFIG_0_OFFSET + EEPROM_CONFIG_FEED_SPEED_OFFSET, CONFIG_DEFAULT_FEED_SPEED);
@@ -79,13 +96,16 @@ void PERSIST_LoadFromStorage() {
 
 void PERSIST_Setup(I2C_HandleTypeDef *hi2c){
 	PERSIST_hi2c = hi2c;
-	PERSIST_LoadDefaults();
 	if (HW_IsV1() == 1) {
 		EEPROM_Setup(hi2c);
 		uint8_t eepromOk = EEPROM_CheckHeader();
 		if (eepromOk == 1) {
 			PERSIST_LoadFromStorage();
+		} else {
+			PERSIST_LoadDefaults();
 		}
+	} else {
+		PERSIST_LoadDefaults();
 	}
 }
 
